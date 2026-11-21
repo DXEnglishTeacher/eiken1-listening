@@ -1,13 +1,16 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "eiken1_listening_lab_v1_" + LESSON_DATA.id;
+  const STORAGE_KEY = "eiken1_listening_lab_v2_" + LESSON_DATA.id;
+  const SPEED_STEPS = [1, 1.25, 0.75];
 
   const state = {
     activeClipIndex: 0,
+    activeTab: "script",
     subtitleMode: "both", // "none" | "en" | "both"
     loopEnabled: true,
-    playbackRate: 1,
+    pipMode: false,
+    speedIndex: 0,
     completedClips: new Set(),
     masteredVocab: new Set(),
     quizAnswers: {},
@@ -22,7 +25,12 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          state.theme = "dark";
+        }
+        return;
+      }
       const saved = JSON.parse(raw);
       if (Array.isArray(saved.completedClips)) {
         state.completedClips = new Set(saved.completedClips);
@@ -32,6 +40,9 @@
       }
       if (saved.theme === "dark" || saved.theme === "light") {
         state.theme = saved.theme;
+      }
+      if (typeof saved.pipMode === "boolean") {
+        state.pipMode = saved.pipMode;
       }
     } catch (_) {
       // Ignore storage errors
@@ -45,7 +56,8 @@
         JSON.stringify({
           completedClips: Array.from(state.completedClips),
           masteredVocab: Array.from(state.masteredVocab),
-          theme: state.theme
+          theme: state.theme,
+          pipMode: state.pipMode
         })
       );
     } catch (_) {
@@ -65,6 +77,10 @@
     return LESSON_DATA.clips[state.activeClipIndex];
   }
 
+  function getPlaybackRate() {
+    return SPEED_STEPS[state.speedIndex];
+  }
+
   function escapeHtml(str) {
     return str
       .replace(/&/g, "&amp;")
@@ -76,72 +92,96 @@
   // --- Theme ---
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
-    const btn = document.getElementById("theme-toggle");
-    btn.textContent = state.theme === "dark" ? "☀️ ライト" : "🌙 ダーク";
+    const moon = document.getElementById("theme-ico-moon");
+    const sun = document.getElementById("theme-ico-sun");
+    if (state.theme === "dark") {
+      moon.hidden = true;
+      sun.hidden = false;
+    } else {
+      moon.hidden = false;
+      sun.hidden = true;
+    }
+  }
+
+  // --- PiP Mode ---
+  function applyPipMode() {
+    const btn = document.getElementById("btn-pip-mode");
+    const frame = document.getElementById("player-frame");
+    const banner = document.getElementById("pip-banner");
+
+    btn.setAttribute("aria-pressed", String(state.pipMode));
+    frame.hidden = state.pipMode;
+    banner.hidden = !state.pipMode;
+
+    if (state.pipMode && playerReady && player && typeof player.pauseVideo === "function") {
+      player.pauseVideo();
+    }
   }
 
   // --- Progress Header ---
   function updateProgress() {
     document.getElementById("progress-clips").textContent =
-      state.completedClips.size + " / " + LESSON_DATA.clips.length;
+      state.completedClips.size + "/" + LESSON_DATA.clips.length;
     document.getElementById("progress-vocab").textContent =
-      state.masteredVocab.size + " / " + LESSON_DATA.vocab.length;
+      state.masteredVocab.size + "/" + LESSON_DATA.vocab.length;
   }
 
-  // --- Render Hero ---
+  // --- Render Lesson Info ---
   function renderHero() {
     document.getElementById("lesson-number").textContent = LESSON_DATA.lessonNumber;
     document.getElementById("lesson-level").textContent = LESSON_DATA.level;
-    document.getElementById("lesson-time").textContent = "目安 " + LESSON_DATA.estimatedMinutes + "分";
+    document.getElementById("lesson-time").textContent = LESSON_DATA.estimatedMinutes + " min";
     document.getElementById("lesson-title").textContent = LESSON_DATA.title;
     document.getElementById("lesson-subtitle").textContent =
       LESSON_DATA.originalTitle + " — " + LESSON_DATA.speaker;
     document.getElementById("lesson-summary").textContent = LESSON_DATA.summary;
   }
 
-  // --- Render Clip List ---
+  // --- Render Horizontal Clip Strip ---
   function renderClipList() {
-    const list = document.getElementById("clip-list");
-    list.innerHTML = "";
+    const strip = document.getElementById("clip-list");
+    strip.innerHTML = "";
     LESSON_DATA.clips.forEach((clip, idx) => {
-      const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
+      btn.setAttribute("role", "option");
       const isDone = state.completedClips.has(clip.id);
       const isActive = idx === state.activeClipIndex;
-      btn.className = "clip-item" + (isActive ? " active" : "") + (isDone ? " done" : "");
+      btn.setAttribute("aria-selected", String(isActive));
+      btn.className = "clip-chip" + (isActive ? " active" : "") + (isDone ? " done" : "");
       btn.innerHTML =
-        '<span class="clip-num">' + (isDone ? "✓" : clip.number) + "</span>" +
-        '<span class="clip-info">' +
-          '<span class="clip-title">' + escapeHtml(clip.title) + "</span>" +
-          '<span class="clip-sub">' + escapeHtml(clip.subtitle) + "</span>" +
-        "</span>" +
-        '<span class="clip-dur">' + escapeHtml(clip.durationLabel) + "</span>";
-      btn.addEventListener("click", () => selectClip(idx, true));
-      li.appendChild(btn);
-      list.appendChild(li);
+        '<span class="chip-num">' + (isDone ? "✓" : "0" + clip.number) + "</span>" +
+        "<span>" + escapeHtml(clip.title) + "</span>";
+      btn.addEventListener("click", () => selectClip(idx, !state.pipMode));
+      strip.appendChild(btn);
+
+      if (isActive) {
+        requestAnimationFrame(() => {
+          btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        });
+      }
     });
   }
 
-  // --- Render Active Clip (Tab 1 & Tab 2) ---
+  // --- Render Active Clip ---
   function renderActiveClip() {
     const clip = getActiveClip();
-
-    // Update direct YouTube link with timestamp
-    const ytLink = document.getElementById("youtube-direct-link");
-    ytLink.href =
+    const ytUrl =
       "https://www.youtube.com/watch?v=" + LESSON_DATA.youtubeId + "&t=" + clip.start + "s";
 
-    document.getElementById("current-clip-range").textContent = clip.durationLabel;
-    document.getElementById("active-clip-heading").textContent =
-      "Clip " + clip.number + ": " + clip.title;
-    document.getElementById("active-clip-eiken").textContent =
-      "🎯 英検1級ポイント: " + clip.eikenPoint;
+    document.getElementById("youtube-direct-link").href = ytUrl;
+    document.getElementById("pip-open-yt").href = ytUrl;
+
+    document.getElementById("active-clip-range").textContent =
+      "CLIP 0" + clip.number + " · " + clip.durationLabel;
+    document.getElementById("active-clip-heading").textContent = clip.title;
+    document.getElementById("active-clip-eiken").textContent = clip.eikenPoint;
 
     const doneBtn = document.getElementById("btn-mark-done");
+    const doneLabel = document.getElementById("done-btn-label");
     const isDone = state.completedClips.has(clip.id);
-    doneBtn.textContent = isDone ? "✓ 完了済み（解除）" : "✓ このクリップを完了にする";
-    doneBtn.className = isDone ? "btn success-toggle" : "btn";
+    doneBtn.setAttribute("aria-pressed", String(isDone));
+    doneLabel.textContent = isDone ? "完了済み" : "完了にする";
 
     renderTranscript();
     renderNativeNotes();
@@ -156,22 +196,22 @@
 
     if (state.subtitleMode === "none") {
       box.innerHTML =
-        '<div class="transcript-hidden-state">' +
-        "<p><strong>🎧 字幕なし（実戦リスニングモード）</strong></p>" +
-        "<p>まずはスクリプトを見ずに2回聞いてみましょう。聞き取れたら「英語のみ」や「英語＋日本語」に切り替えて答え合わせ！</p>" +
+        '<div class="script-hidden-card">' +
+        "<strong>字幕オフ（実戦リスニング）</strong>" +
+        "まずは音だけで2回聞いてみましょう。聞き取れたら「英語」または「英＋日」へ。" +
         "</div>";
       return;
     }
 
     clip.transcript.forEach((line) => {
-      const div = document.createElement("div");
-      div.className = "script-line";
+      const card = document.createElement("div");
+      card.className = "script-card";
       let html = '<p class="script-en">' + escapeHtml(line.en) + "</p>";
       if (state.subtitleMode === "both") {
         html += '<p class="script-ja">' + escapeHtml(line.ja) + "</p>";
       }
-      div.innerHTML = html;
-      box.appendChild(div);
+      card.innerHTML = html;
+      box.appendChild(card);
     });
   }
 
@@ -182,14 +222,17 @@
 
     clip.nativeNotes.forEach((note) => {
       const card = document.createElement("article");
-      card.className = "native-card";
+      card.className = "note-card";
       card.innerHTML =
-        '<div class="native-card-top">' +
-          '<span class="native-phrase">"' + escapeHtml(note.phrase) + '"</span>' +
-          '<span class="native-type">' + escapeHtml(note.type) + "</span>" +
+        '<div class="note-head">' +
+          '<span class="note-phrase">“' + escapeHtml(note.phrase) + '”</span>' +
+          '<span class="note-tag">' + escapeHtml(note.type) + "</span>" +
         "</div>" +
-        '<div class="heard-as">👂 こう聞こえる: ' + escapeHtml(note.heardAs) + "</div>" +
-        '<p class="native-desc">' + escapeHtml(note.explanation) + "</p>";
+        '<div class="sound-bar">' +
+          '<span class="sound-label">SOUND</span>' +
+          "<span>" + escapeHtml(note.heardAs) + "</span>" +
+        "</div>" +
+        '<p class="note-body">' + escapeHtml(note.explanation) + "</p>";
       grid.appendChild(card);
     });
   }
@@ -198,7 +241,7 @@
   function renderDictation() {
     const clip = getActiveClip();
     document.getElementById("dictation-heading").textContent =
-      "✍️ Clip " + clip.number + " ディクテーション: " + clip.title;
+      "Clip 0" + clip.number + " — " + clip.title;
     document.getElementById("dictation-prompt").textContent = clip.dictation.prompt;
 
     const card = document.getElementById("dictation-card");
@@ -210,8 +253,6 @@
         card.appendChild(document.createTextNode(seg.text));
       } else if (seg.blank) {
         blankIdx += 1;
-        const wrap = document.createElement("span");
-        wrap.className = "blank-wrap";
         const input = document.createElement("input");
         input.type = "text";
         input.className = "blank-input";
@@ -220,9 +261,9 @@
         input.dataset.hint = seg.hint;
         input.setAttribute("aria-label", "空欄 " + blankIdx);
         input.autocomplete = "off";
+        input.autocapitalize = "none";
         input.spellcheck = false;
-        wrap.appendChild(input);
-        card.appendChild(wrap);
+        card.appendChild(input);
       }
     });
 
@@ -254,24 +295,24 @@
     fb.hidden = false;
     if (correct === inputs.length) {
       fb.className = "feedback-banner success";
-      fb.textContent = "🎉 全問正解！ネイティブのスピードで正確にキャッチできています！";
+      fb.textContent = "全問正解！ネイティブのスピードで正確に聞き取れています。";
     } else {
       fb.className = "feedback-banner info";
       fb.textContent =
-        correct + " / " + inputs.length + " 問正解。0.75x 再生やヒントも使って再チャレンジしてみましょう！";
+        correct + " / " + inputs.length + " 問正解。0.75x 再生やヒントを使って再挑戦してみましょう。";
     }
   }
 
   function showDictationHints() {
     const inputs = document.querySelectorAll("#dictation-card .blank-input");
     const hintsBox = document.getElementById("dictation-hints");
-    let html = '<ul class="hint-list">';
+    let html = "<ul>";
     inputs.forEach((input, idx) => {
       const ans = input.dataset.answer;
       html +=
         "<li><strong>(" + (idx + 1) + ")</strong> " +
         escapeHtml(input.dataset.hint) +
-        " — 最初の文字: <code>" + escapeHtml(ans[0]) + "...</code></li>";
+        "（頭文字: <code>" + escapeHtml(ans[0]) + "...</code>）</li>";
     });
     html += "</ul>";
     hintsBox.innerHTML = html;
@@ -288,7 +329,7 @@
     const fb = document.getElementById("dictation-feedback");
     fb.hidden = false;
     fb.className = "feedback-banner info";
-    fb.textContent = "解答を表示しました。音声をもう一度聞きながら音とスペルを一致させましょう！";
+    fb.textContent = "解答を表示しました。もう一度音声を聞いて音とスペルを結びつけましょう。";
   }
 
   // --- Vocabulary ---
@@ -300,24 +341,24 @@
       const mastered = state.masteredVocab.has(item.word);
       const card = document.createElement("article");
       card.className = "vocab-card" + (mastered ? " mastered" : "");
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-pressed", String(mastered));
       card.innerHTML =
         '<div class="vocab-top">' +
           "<div>" +
             '<span class="vocab-word">' + escapeHtml(item.word) + "</span>" +
-            '<span class="vocab-phonetic">' + escapeHtml(item.phonetic) + " (" + escapeHtml(item.pos) + ")</span>" +
+            '<span class="vocab-phonetic">' + escapeHtml(item.phonetic) + " · " + escapeHtml(item.pos) + "</span>" +
           "</div>" +
-          '<span class="chip amber">' + escapeHtml(item.eikenTag) + "</span>" +
+          '<span class="vocab-check" aria-hidden="true">' +
+            '<svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          "</span>" +
         "</div>" +
         '<div class="vocab-meaning">' + escapeHtml(item.meaning) + "</div>" +
         '<p class="vocab-note">' + escapeHtml(item.note) + "</p>" +
-        '<p class="vocab-example">"' + escapeHtml(item.example) + '"</p>' +
-        '<div style="margin-top: auto; padding-top: 6px;">' +
-          '<button type="button" class="btn ' + (mastered ? "success-toggle" : "") + '" data-word="' + escapeHtml(item.word) + '">' +
-            (mastered ? "✓ 覚えた！" : "覚えたリストに入れる") +
-          "</button>" +
-        "</div>";
+        '<p class="vocab-example">“' + escapeHtml(item.example) + '”</p>';
 
-      card.querySelector("button").addEventListener("click", () => {
+      const toggle = () => {
         if (state.masteredVocab.has(item.word)) {
           state.masteredVocab.delete(item.word);
         } else {
@@ -326,6 +367,14 @@
         saveState();
         updateProgress();
         renderVocab();
+      };
+
+      card.addEventListener("click", toggle);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+        }
       });
 
       grid.appendChild(card);
@@ -362,14 +411,14 @@
 
       let expHtml = "";
       if (answered) {
-        const prefix = chosen === q.correctIndex ? "⭕ 正解！ " : "❌ 不正解 — ";
+        const prefix = chosen === q.correctIndex ? "正解 — " : "不正解 — ";
         expHtml =
           '<div class="quiz-explanation"><strong>' + prefix + "</strong>" +
           escapeHtml(q.explanation) + "</div>";
       }
 
       card.innerHTML =
-        '<div class="quiz-part">Q' + (qIdx + 1) + " ・ " + escapeHtml(q.part) + "</div>" +
+        '<div class="quiz-part">Q' + (qIdx + 1) + " · " + escapeHtml(q.part) + "</div>" +
         '<p class="quiz-q">' + escapeHtml(q.question) + "</p>" +
         '<div class="quiz-options">' + optsHtml + "</div>" +
         expHtml;
@@ -385,7 +434,20 @@
     });
 
     document.getElementById("quiz-score-text").textContent =
-      "スコア: " + score + " / " + LESSON_DATA.quiz.length;
+      score + " / " + LESSON_DATA.quiz.length;
+  }
+
+  // --- Tab Switching (Syncs Desktop Tabs + Mobile Bottom Nav) ---
+  function switchTab(tabName) {
+    state.activeTab = tabName;
+
+    document.querySelectorAll("[data-tab]").forEach((btn) => {
+      btn.setAttribute("aria-selected", String(btn.dataset.tab === tabName));
+    });
+
+    document.querySelectorAll(".study-panel").forEach((panel) => {
+      panel.hidden = panel.id !== "panel-" + tabName;
+    });
   }
 
   // --- YouTube IFrame Player ---
@@ -399,6 +461,7 @@
     const playerVars = {
       rel: 0,
       modestbranding: 1,
+      playsinline: 1,
       cc_load_policy: 0
     };
     if (window.location.protocol.startsWith("http")) {
@@ -411,13 +474,7 @@
       events: {
         onReady: () => {
           playerReady = true;
-          document.getElementById("player-status").textContent =
-            "✅ プレイヤー準備完了（クリップを選んで再生できます）";
           startTimePolling();
-        },
-        onError: () => {
-          document.getElementById("player-status").textContent =
-            "⚠️ 埋め込み再生できない場合は右の「YouTubeで直接開く」をご利用ください";
         }
       }
     });
@@ -444,7 +501,7 @@
   function playActiveClip() {
     const clip = getActiveClip();
     if (!playerReady || !player) return;
-    player.setPlaybackRate(state.playbackRate);
+    player.setPlaybackRate(getPlaybackRate());
     player.seekTo(clip.start, true);
     player.playVideo();
   }
@@ -459,14 +516,18 @@
 
   // --- Event Listeners ---
   function bindEvents() {
-    // Theme toggle
     document.getElementById("theme-toggle").addEventListener("click", () => {
       state.theme = state.theme === "dark" ? "light" : "dark";
       saveState();
       applyTheme();
     });
 
-    // Player controls
+    document.getElementById("btn-pip-mode").addEventListener("click", () => {
+      state.pipMode = !state.pipMode;
+      saveState();
+      applyPipMode();
+    });
+
     document.getElementById("btn-play-clip").addEventListener("click", playActiveClip);
 
     document.getElementById("btn-back-5").addEventListener("click", () => {
@@ -481,23 +542,19 @@
     loopBtn.addEventListener("click", () => {
       state.loopEnabled = !state.loopEnabled;
       loopBtn.setAttribute("aria-pressed", String(state.loopEnabled));
-      loopBtn.textContent = state.loopEnabled ? "🔁 区間リピート ON" : "🔁 区間リピート OFF";
-      loopBtn.classList.toggle("active-toggle", state.loopEnabled);
+      loopBtn.classList.toggle("is-active", state.loopEnabled);
     });
 
-    document.querySelectorAll(".speed-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const rate = Number(btn.dataset.rate);
-        state.playbackRate = rate;
-        document.querySelectorAll(".speed-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        if (playerReady && player) {
-          player.setPlaybackRate(rate);
-        }
-      });
+    const speedBtn = document.getElementById("btn-speed-cycle");
+    speedBtn.addEventListener("click", () => {
+      state.speedIndex = (state.speedIndex + 1) % SPEED_STEPS.length;
+      const rate = getPlaybackRate();
+      speedBtn.textContent = rate.toFixed(rate === 1 ? 1 : 2).replace(/\.00$/, ".0") + "x";
+      if (playerReady && player) {
+        player.setPlaybackRate(rate);
+      }
     });
 
-    // Mark clip done
     document.getElementById("btn-mark-done").addEventListener("click", () => {
       const clip = getActiveClip();
       if (state.completedClips.has(clip.id)) {
@@ -510,7 +567,6 @@
       renderActiveClip();
     });
 
-    // Subtitle mode
     document.querySelectorAll(".seg-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.subtitleMode = btn.dataset.sub;
@@ -520,26 +576,15 @@
       });
     });
 
-    // Tabs
-    const tabBtns = document.querySelectorAll(".tab-btn");
-    tabBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        tabBtns.forEach((b) => b.setAttribute("aria-selected", "false"));
-        btn.setAttribute("aria-selected", "true");
-        const targetId = btn.getAttribute("aria-controls");
-        document.querySelectorAll(".tab-panel").forEach((panel) => {
-          panel.hidden = panel.id !== targetId;
-        });
-      });
+    document.querySelectorAll("[data-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
 
-    // Dictation buttons
     document.getElementById("btn-check-dictation").addEventListener("click", checkDictation);
     document.getElementById("btn-show-hints").addEventListener("click", showDictationHints);
     document.getElementById("btn-reveal-dictation").addEventListener("click", revealDictation);
     document.getElementById("btn-reset-dictation").addEventListener("click", renderDictation);
 
-    // Quiz reset
     document.getElementById("btn-reset-quiz").addEventListener("click", () => {
       state.quizAnswers = {};
       renderQuiz();
@@ -549,6 +594,7 @@
   // --- Boot ---
   loadState();
   applyTheme();
+  applyPipMode();
   renderHero();
   updateProgress();
   renderActiveClip();
