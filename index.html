@@ -10,14 +10,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="EIKEN 1 Lab" />
-  <link rel="manifest" href="manifest.json?v=3" />
-  <link rel="icon" href="icon.svg?v=3" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg?v=3" />
+  <link rel="manifest" href="manifest.json?v=4" />
+  <link rel="icon" href="icon.svg?v=4" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg?v=4" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <title>EIKEN 1 Listening Lab — Lesson 01</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <!-- Slim Top Bar (scrolls away naturally on mobile to maximize video+content area) -->
@@ -31,18 +31,15 @@
       </div>
       <div class="top-actions">
         <div class="stat-pill" aria-live="polite" title="学習進捗">
-          <span class="stat-item"><strong id="progress-clips">0/5</strong> clips</span>
+          <span class="stat-item"><strong id="progress-clips">0/5</strong><span class="stat-unit"> clips</span></span>
           <span class="stat-div"></span>
-          <span class="stat-item"><strong id="progress-vocab">0/10</strong> words</span>
+          <span class="stat-item"><strong id="progress-vocab">0/10</strong><span class="stat-unit"> words</span></span>
         </div>
         <button type="button" id="btn-pip-mode" class="pill-btn" aria-pressed="false" title="YouTubeアプリの小窓再生(Premium広告なし)に最適化">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="9" width="8" height="6" rx="1" fill="currentColor" opacity="0.25"/><path d="M2 17h20"/></svg>
           <span class="pill-label">PiPモード</span>
         </button>
-        <button type="button" id="theme-toggle" class="icon-circle" aria-label="テーマを切り替え">
-          <svg id="theme-ico-moon" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg id="theme-ico-sun" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
+        <button type="button" id="theme-toggle" class="icon-circle" aria-label="テーマを切り替え"></button>
       </div>
     </div>
   </header>
@@ -230,7 +227,7 @@
     </button>
   </nav>
 
-  <script src="lesson-data.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="lesson-data.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

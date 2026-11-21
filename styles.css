@@ -56,6 +56,8 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -65,6 +67,8 @@ body {
   color: var(--text);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 button, input {
@@ -107,6 +111,13 @@ button, input {
   font-weight: 800;
   font-size: 0.86rem;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .brand-dot {
@@ -142,6 +153,8 @@ button, input {
   background: var(--surface-2);
   font-size: 0.76rem;
   color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .stat-pill strong {
@@ -167,7 +180,14 @@ button, input {
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
+}
+
+.pill-label {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pill-btn[aria-pressed="true"] {
@@ -186,6 +206,7 @@ button, input {
   display: grid;
   place-items: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* Main Shell */
@@ -199,6 +220,11 @@ button, input {
   align-items: start;
 }
 
+.study-area {
+  max-width: 100%;
+  min-width: 0;
+}
+
 /* Media Dock */
 .media-dock {
   position: sticky;
@@ -207,6 +233,8 @@ button, input {
   flex-direction: column;
   gap: 12px;
   z-index: 40;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .player-frame {
@@ -215,6 +243,8 @@ button, input {
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .video-stage {
@@ -222,6 +252,7 @@ button, input {
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
+  overflow: hidden;
 }
 
 .video-stage iframe,
@@ -230,6 +261,8 @@ button, input {
   inset: 0;
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   border: 0;
 }
 
@@ -1039,6 +1072,7 @@ button, input {
 @media (max-width: 900px) {
   .app-shell {
     display: block;
+    max-width: 100%;
     padding: 0 0 calc(76px + env(safe-area-inset-bottom));
   }
 
@@ -1049,6 +1083,11 @@ button, input {
 
   .top-bar-inner {
     padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .brand-name {
+    font-size: 0.8rem;
   }
 
   .brand-sep,
@@ -1056,8 +1095,22 @@ button, input {
     display: none;
   }
 
+  .top-actions {
+    gap: 6px;
+  }
+
   .stat-pill {
-    padding: 4px 9px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    gap: 6px;
+  }
+
+  .stat-unit {
+    display: none;
+  }
+
+  .pill-btn {
+    padding: 5px 9px;
     font-size: 0.72rem;
   }
 
