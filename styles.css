@@ -828,6 +828,90 @@ button, input {
   color: var(--danger);
 }
 
+.blank-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 3px 10px;
+  margin: 0 3px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-weight: 700;
+  font-size: 0.94rem;
+  line-height: 1.4;
+  cursor: pointer;
+  vertical-align: baseline;
+  transition: all 0.15s ease;
+}
+
+.blank-slot.is-active {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.blank-slot.is-filled {
+  border-style: solid;
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.blank-slot.is-active.is-filled {
+  border-color: var(--accent);
+}
+
+.blank-slot.correct {
+  border-style: solid;
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.blank-slot.wrong {
+  border-style: solid;
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.word-bank[hidden] {
+  display: none;
+}
+
+.word-chip {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.word-chip:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.word-chip.is-used {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .action-bar {
   display: flex;
   gap: 8px;
@@ -1212,5 +1296,24 @@ button, input {
 
   .b-nav-btn[aria-selected="true"] {
     color: var(--accent);
+  }
+
+  /* Compact layout when software keyboard is open in type mode */
+  body.keyboard-compact .video-stage {
+    padding-bottom: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.keyboard-compact .clip-strip-wrap,
+  body.keyboard-compact .ad-tip,
+  body.keyboard-compact .bottom-nav,
+  body.keyboard-compact #panel-dictation .clip-header-card {
+    display: none;
+  }
+
+  body.keyboard-compact .app-shell {
+    padding-bottom: 24px;
   }
 }

@@ -8,6 +8,10 @@
     activeClipIndex: 0,
     activeTab: "script",
     subtitleMode: "both", // "none" | "en" | "both"
+    dictationMode: "tap", // "tap" | "type"
+    dictationValues: [],
+    activeBlankIndex: 0,
+    dictationChoices: [],
     loopEnabled: true,
     pipMode: false,
     speedIndex: 0,
@@ -21,6 +25,7 @@
   let playerReady = false;
   let pendingPlay = false;
   let pollTimer = null;
+  let blurTimer = null;
 
   // --- Persistence ---
   function loadState() {
@@ -188,6 +193,7 @@
 
     renderTranscript();
     renderNativeNotes();
+    initDictationForClip();
     renderDictation();
     renderClipList();
   }
@@ -241,11 +247,115 @@
   }
 
   // --- Dictation ---
+  function shuffleList(items) {
+    const arr = items.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function initDictationForClip() {
+    const clip = getActiveClip();
+    const blanks = clip.dictation.segments
+      .filter((seg) => Boolean(seg.blank))
+      .map((seg) => seg.blank);
+    state.dictationValues = blanks.map(() => "");
+    state.activeBlankIndex = 0;
+    state.dictationChoices = shuffleList(blanks.concat(clip.dictation.distractors || []));
+  }
+
+  function scheduleCompactCleanup() {
+    if (blurTimer) clearTimeout(blurTimer);
+    blurTimer = setTimeout(() => {
+      const active = document.activeElement;
+      const keepCompact =
+        active &&
+        (active.classList.contains("blank-input") || Boolean(active.closest(".transport-bar")));
+      if (!keepCompact) {
+        document.body.classList.remove("keyboard-compact");
+      }
+    }, 220);
+  }
+
+  function syncDictationModeButtons() {
+    document.querySelectorAll("[data-dict-mode]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.dictMode === state.dictationMode);
+    });
+  }
+
+  function renderWordBank() {
+    const wordBank = document.getElementById("word-bank");
+    if (!wordBank) return;
+
+    if (state.dictationMode !== "tap") {
+      wordBank.hidden = true;
+      wordBank.innerHTML = "";
+      return;
+    }
+
+    wordBank.hidden = false;
+    wordBank.innerHTML = "";
+
+    const usedCounts = {};
+    state.dictationValues.forEach((val) => {
+      const key = val.trim().toLowerCase();
+      if (key) usedCounts[key] = (usedCounts[key] || 0) + 1;
+    });
+
+    state.dictationChoices.forEach((word) => {
+      const key = word.toLowerCase();
+      const isUsed = (usedCounts[key] || 0) > 0;
+      if (isUsed) usedCounts[key] -= 1;
+
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "word-chip" + (isUsed ? " is-used" : "");
+      chip.textContent = word;
+      chip.disabled = isUsed;
+
+      chip.addEventListener("click", () => {
+        const total = state.dictationValues.length;
+        if (total === 0) return;
+
+        let targetIdx = state.activeBlankIndex;
+        if (targetIdx < 0 || targetIdx >= total) targetIdx = 0;
+        if (state.dictationValues[targetIdx]) {
+          const firstEmpty = state.dictationValues.findIndex((v) => !v);
+          if (firstEmpty !== -1) targetIdx = firstEmpty;
+        }
+
+        state.dictationValues[targetIdx] = word;
+
+        let nextIdx = -1;
+        for (let offset = 1; offset <= total; offset++) {
+          const probe = (targetIdx + offset) % total;
+          if (!state.dictationValues[probe]) {
+            nextIdx = probe;
+            break;
+          }
+        }
+        state.activeBlankIndex = nextIdx === -1 ? targetIdx : nextIdx;
+        renderDictation();
+      });
+
+      wordBank.appendChild(chip);
+    });
+  }
+
   function renderDictation() {
     const clip = getActiveClip();
     document.getElementById("dictation-heading").textContent =
       "Clip 0" + clip.number + " — " + clip.title;
     document.getElementById("dictation-prompt").textContent = clip.dictation.prompt;
+    syncDictationModeButtons();
+
+    if (state.dictationMode === "tap") {
+      document.body.classList.remove("keyboard-compact");
+    }
 
     const card = document.getElementById("dictation-card");
     card.innerHTML = "";
@@ -255,20 +365,67 @@
       if (seg.text) {
         card.appendChild(document.createTextNode(seg.text));
       } else if (seg.blank) {
+        const currentIdx = blankIdx;
         blankIdx += 1;
-        const input = document.createElement("input");
-        input.type = "text";
-        input.className = "blank-input";
-        input.placeholder = "(" + blankIdx + ")";
-        input.dataset.answer = seg.blank;
-        input.dataset.hint = seg.hint;
-        input.setAttribute("aria-label", "空欄 " + blankIdx);
-        input.autocomplete = "off";
-        input.autocapitalize = "none";
-        input.spellcheck = false;
-        card.appendChild(input);
+        const currentVal = state.dictationValues[currentIdx] || "";
+
+        if (state.dictationMode === "tap") {
+          const slot = document.createElement("button");
+          slot.type = "button";
+          slot.className =
+            "blank-slot" +
+            (currentIdx === state.activeBlankIndex ? " is-active" : "") +
+            (currentVal ? " is-filled" : "");
+          slot.textContent = currentVal || "(" + blankIdx + ")";
+          slot.dataset.index = String(currentIdx);
+          slot.dataset.answer = seg.blank;
+          slot.dataset.hint = seg.hint;
+          slot.setAttribute("aria-label", "空欄 " + blankIdx);
+
+          slot.addEventListener("click", () => {
+            if (state.dictationValues[currentIdx]) {
+              state.dictationValues[currentIdx] = "";
+            }
+            state.activeBlankIndex = currentIdx;
+            renderDictation();
+          });
+
+          card.appendChild(slot);
+        } else {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "blank-input";
+          input.placeholder = "(" + blankIdx + ")";
+          input.value = currentVal;
+          input.dataset.index = String(currentIdx);
+          input.dataset.answer = seg.blank;
+          input.dataset.hint = seg.hint;
+          input.setAttribute("aria-label", "空欄 " + blankIdx);
+          input.autocomplete = "off";
+          input.autocapitalize = "none";
+          input.spellcheck = false;
+
+          input.addEventListener("input", () => {
+            state.dictationValues[currentIdx] = input.value;
+            input.classList.remove("correct", "wrong");
+          });
+
+          input.addEventListener("focus", () => {
+            if (blurTimer) clearTimeout(blurTimer);
+            state.activeBlankIndex = currentIdx;
+            if (window.innerWidth <= 900) {
+              document.body.classList.add("keyboard-compact");
+            }
+          });
+
+          input.addEventListener("blur", scheduleCompactCleanup);
+
+          card.appendChild(input);
+        }
       }
     });
+
+    renderWordBank();
 
     const hintsBox = document.getElementById("dictation-hints");
     hintsBox.hidden = true;
@@ -279,42 +436,48 @@
     feedback.innerHTML = "";
   }
 
+  function getDictationTargets() {
+    return document.querySelectorAll("#dictation-card .blank-slot, #dictation-card .blank-input");
+  }
+
   function checkDictation() {
-    const inputs = document.querySelectorAll("#dictation-card .blank-input");
+    const targets = getDictationTargets();
     let correct = 0;
-    inputs.forEach((input) => {
-      const userVal = input.value.trim().toLowerCase();
-      const expected = input.dataset.answer.toLowerCase();
-      input.classList.remove("correct", "wrong");
+    targets.forEach((el) => {
+      const idx = Number(el.dataset.index);
+      const rawVal = el.tagName === "INPUT" ? el.value : state.dictationValues[idx] || "";
+      const userVal = rawVal.trim().toLowerCase();
+      const expected = el.dataset.answer.toLowerCase();
+      el.classList.remove("correct", "wrong");
       if (userVal === expected) {
-        input.classList.add("correct");
+        el.classList.add("correct");
         correct += 1;
       } else {
-        input.classList.add("wrong");
+        el.classList.add("wrong");
       }
     });
 
     const fb = document.getElementById("dictation-feedback");
     fb.hidden = false;
-    if (correct === inputs.length) {
+    if (correct === targets.length) {
       fb.className = "feedback-banner success";
       fb.textContent = "全問正解！ネイティブのスピードで正確に聞き取れています。";
     } else {
       fb.className = "feedback-banner info";
       fb.textContent =
-        correct + " / " + inputs.length + " 問正解。0.75x 再生やヒントを使って再挑戦してみましょう。";
+        correct + " / " + targets.length + " 問正解。0.75x 再生やヒントを使って再挑戦してみましょう。";
     }
   }
 
   function showDictationHints() {
-    const inputs = document.querySelectorAll("#dictation-card .blank-input");
+    const targets = getDictationTargets();
     const hintsBox = document.getElementById("dictation-hints");
     let html = "<ul>";
-    inputs.forEach((input, idx) => {
-      const ans = input.dataset.answer;
+    targets.forEach((el, idx) => {
+      const ans = el.dataset.answer;
       html +=
         "<li><strong>(" + (idx + 1) + ")</strong> " +
-        escapeHtml(input.dataset.hint) +
+        escapeHtml(el.dataset.hint) +
         "（頭文字: <code>" + escapeHtml(ans[0]) + "...</code>）</li>";
     });
     html += "</ul>";
@@ -323,12 +486,21 @@
   }
 
   function revealDictation() {
-    const inputs = document.querySelectorAll("#dictation-card .blank-input");
-    inputs.forEach((input) => {
-      input.value = input.dataset.answer;
-      input.classList.remove("wrong");
-      input.classList.add("correct");
+    const targets = getDictationTargets();
+    targets.forEach((el) => {
+      const idx = Number(el.dataset.index);
+      const ans = el.dataset.answer;
+      state.dictationValues[idx] = ans;
+      el.classList.remove("wrong");
+      el.classList.add("correct");
+      if (el.tagName === "INPUT") {
+        el.value = ans;
+      } else {
+        el.textContent = ans;
+        el.classList.add("is-filled");
+      }
     });
+    renderWordBank();
     const fb = document.getElementById("dictation-feedback");
     fb.hidden = false;
     fb.className = "feedback-banner info";
@@ -451,6 +623,10 @@
     document.querySelectorAll(".study-panel").forEach((panel) => {
       panel.hidden = panel.id !== "panel-" + tabName;
     });
+
+    if (tabName !== "dictation") {
+      document.body.classList.remove("keyboard-compact");
+    }
 
     if (window.innerWidth <= 900 && window.scrollY > 40) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -583,13 +759,24 @@
       renderActiveClip();
     });
 
-    document.querySelectorAll(".seg-btn").forEach((btn) => {
+    document.querySelectorAll(".seg-btn[data-sub]").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.subtitleMode = btn.dataset.sub;
-        document.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".seg-btn[data-sub]").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         renderTranscript();
       });
+    });
+
+    document.querySelectorAll("[data-dict-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.dictationMode = btn.dataset.dictMode;
+        renderDictation();
+      });
+    });
+
+    document.querySelectorAll(".transport-bar button").forEach((btn) => {
+      btn.addEventListener("blur", scheduleCompactCleanup);
     });
 
     document.querySelectorAll("[data-tab]").forEach((btn) => {
@@ -599,7 +786,10 @@
     document.getElementById("btn-check-dictation").addEventListener("click", checkDictation);
     document.getElementById("btn-show-hints").addEventListener("click", showDictationHints);
     document.getElementById("btn-reveal-dictation").addEventListener("click", revealDictation);
-    document.getElementById("btn-reset-dictation").addEventListener("click", renderDictation);
+    document.getElementById("btn-reset-dictation").addEventListener("click", () => {
+      initDictationForClip();
+      renderDictation();
+    });
 
     document.getElementById("btn-reset-quiz").addEventListener("click", () => {
       state.quizAnswers = {};

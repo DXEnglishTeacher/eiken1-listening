@@ -75,7 +75,8 @@ const LESSON_DATA = {
         }
       ],
       dictation: {
-        prompt: "音声を聞いて、空欄に入る単語を英語で入力しましょう（小文字OK）。",
+        prompt: "音声を聞いて、空欄に入る単語を選びましょう（右上で手打ち入力にも切替可）。",
+        distractors: ["severe", "theory", "expected", "simple"],
         segments: [
           { text: "You get enough done in the first week that, with some heavier days later on, everything gets done, things stay " },
           { blank: "civil", hint: "穏便な・礼儀正しい（5文字）" },
@@ -142,6 +143,7 @@ const LESSON_DATA = {
       ],
       dictation: {
         prompt: "即効快楽モンキーの性質を表す重要語を聞き取りましょう。",
+        distractors: ["Qualification", "initially", "considering", "gradually"],
         segments: [
           { text: "The Instant " },
           { blank: "Gratification", hint: "満足・快楽（13文字）" },
@@ -201,6 +203,7 @@ const LESSON_DATA = {
       ],
       dictation: {
         prompt: "ダーク・プレイグラウンドの空気を満たす単語を聞き取りましょう。",
+        distractors: ["unheard", "thread", "apathy", "envy"],
         segments: [
           { text: "The fun you have in the Dark Playground isn't actually fun, because it's completely " },
           { blank: "unearned", hint: "努力で得ていない（8文字）" },
@@ -256,6 +259,7 @@ const LESSON_DATA = {
       ],
       dictation: {
         prompt: "パニック・モンスターが目を覚ます条件を聞き取りましょう。",
+        distractors: ["dominant", "harassment", "consensus", "compromise"],
         segments: [
           { text: "The Panic Monster is " },
           { blank: "dormant", hint: "休眠状態の（7文字）" },
@@ -319,6 +323,7 @@ const LESSON_DATA = {
       ],
       dictation: {
         prompt: "スピーチの核心となる名フレーズを聞き取りましょう。",
+        distractors: ["climbing", "inspector", "fascination", "hesitation"],
         segments: [
           { text: "It's not that they're " },
           { blank: "cramming", hint: "一夜漬けする（8文字）" },
