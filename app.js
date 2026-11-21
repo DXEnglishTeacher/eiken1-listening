@@ -24,6 +24,7 @@
   let player = null;
   let playerReady = false;
   let pendingPlay = false;
+  let pendingSeek = null;
   let pollTimer = null;
   let blurTimer = null;
 
@@ -179,6 +180,7 @@
 
     document.getElementById("youtube-direct-link").href = ytUrl;
     document.getElementById("pip-open-yt").href = ytUrl;
+    document.getElementById("current-time-display").textContent = formatTime(clip.start);
 
     document.getElementById("active-clip-range").textContent =
       "CLIP 0" + clip.number + " · " + clip.durationLabel;
@@ -198,6 +200,24 @@
     renderClipList();
   }
 
+  function highlightActiveTranscriptLine(currentSec) {
+    const cards = document.querySelectorAll("#transcript-box .script-card");
+    if (!cards.length) return;
+    const clip = getActiveClip();
+    const lines = clip.transcript || [];
+    let activeIdx = -1;
+    if (currentSec >= clip.start - 0.5 && currentSec <= clip.end + 1.0) {
+      for (let i = 0; i < lines.length; i++) {
+        if (currentSec + 0.8 >= lines[i].start) {
+          activeIdx = i;
+        }
+      }
+    }
+    cards.forEach((card, idx) => {
+      card.classList.toggle("is-playing", idx === activeIdx);
+    });
+  }
+
   function renderTranscript() {
     const clip = getActiveClip();
     const box = document.getElementById("transcript-box");
@@ -212,16 +232,38 @@
       return;
     }
 
-    clip.transcript.forEach((line) => {
-      const card = document.createElement("div");
+    clip.transcript.forEach((line, idx) => {
+      const card = document.createElement("button");
+      card.type = "button";
       card.className = "script-card";
-      let html = '<p class="script-en">' + escapeHtml(line.en) + "</p>";
+      card.dataset.lineIndex = String(idx);
+      card.dataset.start = String(line.start);
+      card.setAttribute("aria-label", formatTime(line.start) + " から再生: " + line.en);
+
+      let html =
+        '<div class="script-meta">' +
+          '<span class="script-play-hint">' +
+            '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6,4 20,12 6,20"/></svg>' +
+            "<span>" + formatTime(line.start) + "</span>" +
+          "</span>" +
+          "<span>タップで再生</span>" +
+        "</div>" +
+        '<p class="script-en">' + escapeHtml(line.en) + "</p>";
       if (state.subtitleMode === "both") {
         html += '<p class="script-ja">' + escapeHtml(line.ja) + "</p>";
       }
       card.innerHTML = html;
+      card.addEventListener("click", () => {
+        seekAndPlay(line.start);
+      });
       box.appendChild(card);
     });
+
+    const now =
+      playerReady && player && typeof player.getCurrentTime === "function"
+        ? player.getCurrentTime()
+        : clip.start;
+    highlightActiveTranscriptLine(now);
   }
 
   function renderNativeNotes() {
@@ -641,11 +683,13 @@
   }
 
   window.onYouTubeIframeAPIReady = function () {
+    const firstStart = LESSON_DATA.clips[0] ? LESSON_DATA.clips[0].start : 0;
     const playerVars = {
       rel: 0,
       modestbranding: 1,
       playsinline: 1,
-      cc_load_policy: 0
+      cc_load_policy: 0,
+      start: firstStart
     };
     if (window.location.protocol.startsWith("http")) {
       playerVars.origin = window.location.origin;
@@ -661,8 +705,10 @@
           playerReady = true;
           startTimePolling();
           if (pendingPlay) {
+            const target = pendingSeek !== null ? pendingSeek : getActiveClip().start;
             pendingPlay = false;
-            playActiveClip();
+            pendingSeek = null;
+            seekAndPlay(target);
           }
         }
       }
@@ -675,6 +721,7 @@
       if (!playerReady || !player || typeof player.getCurrentTime !== "function") return;
       const now = player.getCurrentTime();
       document.getElementById("current-time-display").textContent = formatTime(now);
+      highlightActiveTranscriptLine(now);
 
       const clip = getActiveClip();
       if (
@@ -684,18 +731,24 @@
       ) {
         player.seekTo(clip.start, true);
       }
-    }, 300);
+    }, 200);
   }
 
-  function playActiveClip() {
-    const clip = getActiveClip();
+  function seekAndPlay(seconds) {
+    highlightActiveTranscriptLine(seconds);
+    document.getElementById("current-time-display").textContent = formatTime(seconds);
     if (!playerReady || !player) {
+      pendingSeek = seconds;
       pendingPlay = true;
       return;
     }
     player.setPlaybackRate(getPlaybackRate());
-    player.seekTo(clip.start, true);
+    player.seekTo(seconds, true);
     player.playVideo();
+  }
+
+  function playActiveClip() {
+    seekAndPlay(getActiveClip().start);
   }
 
   function selectClip(index, autoPlay) {
@@ -722,12 +775,32 @@
 
     document.getElementById("btn-play-clip").addEventListener("click", playActiveClip);
 
-    document.getElementById("btn-back-5").addEventListener("click", () => {
-      if (!playerReady || !player) return;
+    document.getElementById("btn-prev-line").addEventListener("click", () => {
       const clip = getActiveClip();
-      const target = Math.max(clip.start, player.getCurrentTime() - 5);
-      player.seekTo(target, true);
-      player.playVideo();
+      const lines = clip.transcript || [];
+      if (!lines.length) {
+        seekAndPlay(clip.start);
+        return;
+      }
+      const now =
+        playerReady && player && typeof player.getCurrentTime === "function"
+          ? player.getCurrentTime()
+          : clip.start;
+      let curIdx = 0;
+      for (let i = 0; i < lines.length; i++) {
+        if (now + 0.3 >= lines[i].start) {
+          curIdx = i;
+        }
+      }
+      let targetStart;
+      if (curIdx > 0 && now - lines[curIdx].start <= 2.0) {
+        targetStart = lines[curIdx - 1].start;
+      } else if (now > lines[curIdx].start + 2.0) {
+        targetStart = lines[curIdx].start;
+      } else {
+        targetStart = lines[0].start;
+      }
+      seekAndPlay(targetStart);
     });
 
     const loopBtn = document.getElementById("btn-loop");

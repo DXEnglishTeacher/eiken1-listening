@@ -18,30 +18,35 @@ const LESSON_DATA = {
       number: 1,
       title: "理想のスケジュールと現実",
       subtitle: "ネイティブの自然なつなぎ言葉とユーモア表現",
-      start: 0,
-      end: 48,
-      durationLabel: "0:00 – 0:48",
+      start: 12,
+      end: 58,
+      durationLabel: "0:12 – 0:58",
       eikenPoint: "Part 4（リアルな語り）に頻出するフィラーや口語表現の聞き流し力を鍛える",
       transcript: [
         {
+          start: 12.6,
           en: "So in college, I was a government major, which means I had to write a lot of papers.",
           ja: "大学時代、僕は政治学専攻でした。つまり、レポートを山ほど書かなきゃいけなかったんです。"
         },
         {
+          start: 19.4,
           en: "Now, when a normal student writes a paper, they might spread the work out a little like this.",
           ja: "さて、普通の学生がレポートを書くときは、こんなふうに作業を少しずつ分散させますよね。"
         },
         {
+          start: 23.9,
           en: "So, you know — you get started maybe a little slowly, but you get enough done in the first week that, with some heavier days later on, everything gets done, things stay civil.",
           ja: "ほら、最初はちょっとスロースタートかもしれないけど、最初の1週間である程度終わらせておけば、後半に少し忙しい日があっても全部終わって、平和に（修羅場にならずに）済むんです。"
         },
         {
+          start: 35.9,
           en: "And I would want to do that like that. That would be the plan. I would have it all ready to go, but then, actually, the paper would come along, and then I would kind of do this.",
           ja: "僕もそうやりたいんですよ。それが計画なんです。準備万端にしておくのに、いざレポートの時期が来ると、まあこんな感じになっちゃうんです（直前までゼロで最後に爆上げ）。"
         },
         {
-          en: "And that would happen every single paper. But then came my 90-page senior thesis, a paper you're supposed to spend a year on...",
-          ja: "それが毎回すべてのレポートで起きるんです。そしてついにやってきたのが90ページの卒業論文。1年かけて書くべき大作です…"
+          start: 48.8,
+          en: "And that would happen every single paper. But then came my 90-page senior thesis, a paper you're supposed to spend a year on.",
+          ja: "それが毎回すべてのレポートで起きるんです。そしてついにやってきたのが90ページの卒業論文。1年かけて書くべき大作です。"
         }
       ],
       nativeNotes: [
@@ -93,65 +98,68 @@ const LESSON_DATA = {
       number: 2,
       title: "即効快楽モンキーの正体",
       subtitle: "英検1級レベルの抽象語彙が連続するコアパート",
-      start: 275,
-      end: 325,
-      durationLabel: "4:35 – 5:25",
-      eikenPoint: "Part 2（講義形式）で頻出する心理学・行動経済学系の抽象表現をキャッチする",
+      start: 303,
+      end: 326,
+      durationLabel: "5:03 – 5:26",
+      eikenPoint: "Part 2（講義形式）で頻出する比喩表現・口語的な定義づけを正確にキャッチする",
       transcript: [
         {
-          en: "The fact is, the Instant Gratification Monkey is the last creature who should be in charge of decisions.",
-          ja: "実のところ、この『即効快楽モンキー』は、意思決定の舵取りを任せて最もいけない生き物なんです。"
+          start: 303.5,
+          en: "The Instant Gratification Monkey does not seem like a guy you want behind the wheel.",
+          ja: "この『即効快楽モンキー』は、どう見てもハンドルを握らせたいタイプには見えませんよね。"
         },
         {
+          start: 307.5,
           en: "He lives entirely in the present moment. He has no memory of the past, no knowledge of the future, and he only cares about two things: easy and fun.",
           ja: "彼は完全に『今この瞬間』だけを生きています。過去の記憶もなければ、未来の知識もない。気にするのはたった2つ、『楽ちん』と『楽しい』だけです。"
         },
         {
-          en: "And disregarding the future altogether, he concerns himself entirely with maximizing the ease and pleasure of the current moment.",
-          ja: "未来のことなど一切無視して、今この瞬間の気楽さと快楽を最大化することだけに没頭するのです。"
+          start: 316.3,
+          en: "Now, in the animal world, that works fine. If you're a dog and you spend your whole life doing nothing other than easy and fun things, you're a huge success!",
+          ja: "さて、動物の世界ならそれでうまくいきます。もしあなたが犬で、一生『楽ちんで楽しいこと』だけして過ごしたなら、大成功ですからね！"
         }
       ],
       nativeNotes: [
         {
-          phrase: "the last creature who should be...",
-          heardAs: "ザ ラスト クリーチャー フー シュッビー",
-          type: "ネイティブの強調構文",
+          phrase: "behind the wheel",
+          heardAs: "ビハインド ザ ウィール",
+          type: "ネイティブの定番比喩",
           explanation:
-            "「the last person/thing to ...」で「最も〜しそうにない／最も〜すべきでない」という意味の超定番表現！直訳の「最後の」ではなく、強い否定ニュアンスで一瞬で反応できるようにしましょう。"
+            "wheel は車のハンドル（steering wheel）のこと。\"behind the wheel\" で「運転席に座っている＝意思決定や物事の舵取りを握っている」というネイティブが大好きなイディオムです。"
         },
         {
-          phrase: "in charge of decisions",
-          heardAs: "イン チャージャヴ ディスィジョンズ",
-          type: "音声変化（連結）",
+          phrase: "lives entirely in the present moment",
+          heardAs: "リヴズ エンタイアリー イン ザ プレゼン モウメント",
+          type: "英検1級重要表現＆脱落",
           explanation:
-            "charge の語尾の音と of がくっつき「チャージャヴ」のように滑らかに繋がります。"
+            "entirely（完全に）を強調しつつ、present moment は t の音が落ちて「プレゼン・モウメント」のように繋がります。"
         },
         {
-          phrase: "disregarding the future altogether",
-          heardAs: "ディスィガーディング ザ フューチャー オールトゥゲザー",
-          type: "英検1級重要表現",
+          phrase: "no memory of the past, no knowledge of the future",
+          heardAs: "ノウ メモリアヴ ザ パスト、ノウ ナレッジャヴ ザ フューチャー",
+          type: "音声変化（連結）＆対比リズム",
           explanation:
-            "disregard（〜を完全に無視する）＋ altogether（完全に・まったく）。英検1級のリスニングでは、話者の態度や主張を言い換える正解選択肢の根拠になりやすい重要セットです。"
+            "memory of や knowledge of の最後の音と of がくっつき「メモリアヴ」「ナレッジャヴ」と滑らかに繋がります。\"no A, no B\" の対比リズムを掴むと一瞬で内容が頭に入ります。"
         },
         {
-          phrase: "concerns himself entirely with",
-          heardAs: "コンサーンズ ヒムセルフ エンタイアリー ウィズ",
-          type: "語彙のニュアンス",
+          phrase: "nothing other than easy and fun things",
+          heardAs: "ナッシング アザーザン イージー アン ファン スィングズ",
+          type: "ネイティブの頻出フレーズ",
           explanation:
-            "concern oneself with ~ は「〜に関心を持つ／〜に没頭する」という少しかしこまった表現。ふざけた「サル」の話をあえてアカデミックな硬い単語で語ることで笑いを作っています。"
+            "other than ~ は「〜以外に」。\"nothing other than ...\" で「〜以外は何ひとつない（〜ばっかり）」。easy and fun の and も「アン」と短く弱まります。"
         }
       ],
       dictation: {
         prompt: "即効快楽モンキーの性質を表す重要語を聞き取りましょう。",
-        distractors: ["Qualification", "initially", "considering", "gradually"],
+        distractors: ["Qualification", "initially", "memory", "average"],
         segments: [
           { text: "The Instant " },
           { blank: "Gratification", hint: "満足・快楽（13文字）" },
-          { text: " Monkey is the last creature who should be in charge of decisions. He lives " },
+          { text: " Monkey does not seem like a guy you want behind the wheel. He lives " },
           { blank: "entirely", hint: "完全に（8文字）" },
-          { text: " in the present moment, " },
-          { blank: "disregarding", hint: "〜を無視して（12文字）" },
-          { text: " the future altogether." }
+          { text: " in the present moment. He has no memory of the past, no " },
+          { blank: "knowledge", hint: "知識（9文字）" },
+          { text: " of the future." }
         ]
       }
     },
@@ -160,20 +168,23 @@ const LESSON_DATA = {
       number: 3,
       title: "ダーク・プレイグラウンド",
       subtitle: "罪悪感まみれの遊び時間と英語特有の「皮肉」",
-      start: 399,
-      end: 446,
-      durationLabel: "6:39 – 7:26",
+      start: 403,
+      end: 427,
+      durationLabel: "6:43 – 7:07",
       eikenPoint: "話者の皮肉（irony / sarcasm）や感情のニュアンスを正しく読み取る力",
       transcript: [
         {
+          start: 403.9,
           en: "Now, the Dark Playground is a place that all of you procrastinators out there know very well.",
           ja: "さて、『ダーク・プレイグラウンド（暗黒の遊び場）』は、会場の先延ばし魔の皆さんなら誰もがよ〜く知っている場所です。"
         },
         {
+          start: 410.9,
           en: "It's where leisure activities happen at times when leisure activities are not supposed to be happening.",
           ja: "それは、本来なら遊んでいるはずではない時間帯に、娯楽が繰り広げられる場所のことです。"
         },
         {
+          start: 416.4,
           en: "The fun you have in the Dark Playground isn't actually fun, because it's completely unearned, and the air is filled with guilt, dread, anxiety, self-hatred — all of those good procrastinator feelings.",
           ja: "ダーク・プレイグラウンドでの楽しみは、実はちっとも楽しくありません。だって全く『自分で勝ち取った（やるべきことを終えた後の）』楽しみじゃないから。空気は罪悪感、恐怖、不安、自己嫌悪で満たされています――そう、先延ばし魔におなじみの『素敵な』感情ばかりですね。"
         }
@@ -220,16 +231,18 @@ const LESSON_DATA = {
       number: 4,
       title: "パニック・モンスター覚醒！",
       subtitle: "締め切り直前に奇跡を起こす脳の守護神",
-      start: 446,
-      end: 485,
-      durationLabel: "7:26 – 8:05",
+      start: 454,
+      end: 472,
+      durationLabel: "7:34 – 7:52",
       eikenPoint: "英検1級の超頻出語 dormant を文脈と音で完全に定着させる",
       transcript: [
         {
-          en: "The Panic Monster is dormant most of the time, but he suddenly wakes up anytime a deadline gets too close or there's danger of public embarrassment, a career disaster, or some other scary consequence.",
-          ja: "『パニック・モンスター』は普段ほとんど休眠状態なのですが、締め切りが迫りすぎたり、人前で恥をかく危険やキャリア上の大惨事、その他恐ろしい結末の危機が迫ると、突如として目を覚ますのです。"
+          start: 454.4,
+          en: "Now, the Panic Monster is dormant most of the time, but he suddenly wakes up anytime a deadline gets too close or there's danger of public embarrassment, a career disaster, or some other scary consequence.",
+          ja: "さて、『パニック・モンスター』は普段ほとんど休眠状態なのですが、締め切りが迫りすぎたり、人前で恥をかく危険やキャリア上の大惨事、その他恐ろしい結末の危機が迫ると、突如として目を覚ますのです。"
         },
         {
+          start: 467.8,
           en: "And importantly, he's the only thing the Monkey is terrified of.",
           ja: "そして重要なことに、彼はあのモンキーが唯一心底怯える存在なのです。"
         }
@@ -276,24 +289,28 @@ const LESSON_DATA = {
       number: 5,
       title: "自分の人生の『観客』になってない？",
       subtitle: "笑いのあとに胸を打つ、長期的な先延ばしの真実",
-      start: 660,
-      end: 725,
-      durationLabel: "11:00 – 12:05",
+      start: 718,
+      end: 757,
+      durationLabel: "11:58 – 12:37",
       eikenPoint: "スピーチの転調（ユーモア → 深刻な主張）と、話者の本質的なメッセージ（Main Idea）を掴む",
       transcript: [
         {
+          start: 718.0,
           en: "And it's this long-term kind of procrastination that's much less visible and much less talked about than the funnier, short-term deadline-based kind.",
           ja: "そして、面白おかしく語られる短期的な締め切り型の先延ばしよりも、ずっと目に見えにくく、語られることも少ないのが、この『長期的な先延ばし』なのです。"
         },
         {
-          en: "It's usually suffered quietly and privately. And it can be the source of a huge amount of long-term unhappiness and regrets.",
+          start: 726.7,
+          en: "It's usually suffered quietly and privately. And it can be the source of a huge amount of long-term unhappiness, and regrets.",
           ja: "それはたいてい、静かに、誰にも知られずに苦しまれるものです。そして、膨大な長期的不幸と後悔の源になり得るのです。"
         },
         {
+          start: 736.6,
           en: "And I thought, that's why those people are emailing, and that's why they're in such a bad place. It's not that they're cramming for some project.",
           ja: "そこで気づいたんです。だからこそ読者たちはメールをくれたし、あんなにもつらい状況にいるんだと。何かのプロジェクトのために一夜漬けしているからじゃないんです。"
         },
         {
+          start: 744.8,
           en: "It's that long-term procrastination has made them feel like a spectator, at times, in their own lives. The frustration is not that they couldn't achieve their dreams; it's that they weren't even able to start chasing them.",
           ja: "長期的な先延ばしのせいで、時に『自分の人生の観客』のように感じてしまっているからなのです。彼らの苛立ちは、夢を叶えられなかったことではありません。夢を追いかけ始めることすらできなかったことにあるのです。"
         }

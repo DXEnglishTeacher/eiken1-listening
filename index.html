@@ -10,14 +10,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="EIKEN 1 Lab" />
-  <link rel="manifest" href="manifest.json?v=5" />
-  <link rel="icon" href="icon.svg?v=5" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg?v=5" />
+  <link rel="manifest" href="manifest.json?v=6" />
+  <link rel="icon" href="icon.svg?v=6" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg?v=6" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <title>EIKEN 1 Listening Lab — Lesson 01</title>
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <!-- Slim Top Bar (scrolls away naturally on mobile to maximize video+content area) -->
@@ -59,9 +59,9 @@
               <svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
               <span>再生</span>
             </button>
-            <button type="button" id="btn-back-5" class="t-btn" aria-label="5秒戻す">
-              <svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-              <span>-5s</span>
+            <button type="button" id="btn-prev-line" class="t-btn" aria-label="前の文章に戻る">
+              <svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+              <span>前の文</span>
             </button>
             <button type="button" id="btn-loop" class="t-btn is-active" aria-pressed="true" aria-label="区間リピート切り替え">
               <svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
@@ -70,7 +70,7 @@
           </div>
           <div class="transport-right">
             <button type="button" id="btn-speed-cycle" class="t-speed" aria-label="再生速度を切り替え">1.0x</button>
-            <span class="t-time" id="current-time-display">0:00</span>
+            <span class="t-time" id="current-time-display">0:12</span>
           </div>
         </div>
       </div>
@@ -81,7 +81,7 @@
           <strong>YouTubeアプリ連携（広告ゼロ・PiP）</strong>
           <span>YouTubeアプリで再生し、小窓（PiP）にしたまま下で学習できます</span>
         </div>
-        <a id="pip-open-yt" class="pip-launch-btn" href="https://www.youtube.com/watch?v=arj7oStGLkU" target="_blank" rel="noopener noreferrer">
+        <a id="pip-open-yt" class="pip-launch-btn" href="https://www.youtube.com/watch?v=arj7oStGLkU&t=12s" target="_blank" rel="noopener noreferrer">
           <svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
           <span>この位置から開く</span>
         </a>
@@ -96,7 +96,7 @@
       <details class="ad-tip">
         <summary>
           <span>Premiumなのに広告が出る場合</span>
-          <a id="youtube-direct-link" href="https://www.youtube.com/watch?v=arj7oStGLkU" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">YouTubeで開く ↗</a>
+          <a id="youtube-direct-link" href="https://www.youtube.com/watch?v=arj7oStGLkU&t=12s" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">YouTubeで開く ↗</a>
         </summary>
         <p>
           スマホの埋め込み動画ではセキュリティ仕様によりYouTubeのログイン状態が引き継がれず広告が出ることがあります。右上の<strong>「PiPモード」</strong>をONにしてYouTubeアプリで再生→小窓（ピクチャ・イン・ピクチャ）にすると、<strong>広告なし＆画面を広く</strong>学習できます。
@@ -236,7 +236,7 @@
     </button>
   </nav>
 
-  <script src="lesson-data.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="lesson-data.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
