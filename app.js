@@ -19,6 +19,7 @@
 
   let player = null;
   let playerReady = false;
+  let pendingPlay = false;
   let pollTimer = null;
 
   // --- Persistence ---
@@ -448,6 +449,10 @@
     document.querySelectorAll(".study-panel").forEach((panel) => {
       panel.hidden = panel.id !== "panel-" + tabName;
     });
+
+    if (window.innerWidth <= 900 && window.scrollY > 40) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
   // --- YouTube IFrame Player ---
@@ -475,6 +480,10 @@
         onReady: () => {
           playerReady = true;
           startTimePolling();
+          if (pendingPlay) {
+            pendingPlay = false;
+            playActiveClip();
+          }
         }
       }
     });
@@ -500,7 +509,10 @@
 
   function playActiveClip() {
     const clip = getActiveClip();
-    if (!playerReady || !player) return;
+    if (!playerReady || !player) {
+      pendingPlay = true;
+      return;
+    }
     player.setPlaybackRate(getPlaybackRate());
     player.seekTo(clip.start, true);
     player.playVideo();
