@@ -10,17 +10,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="EIKEN 1 Lab" />
-  <link rel="manifest" href="manifest.json?v=6" />
-  <link rel="icon" href="icon.svg?v=6" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg?v=6" />
+  <link rel="manifest" href="manifest.json?v=7" />
+  <link rel="icon" href="icon.svg?v=7" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg?v=7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <title>EIKEN 1 Listening Lab — Lesson 01</title>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
-  <!-- Slim Top Bar (scrolls away naturally on mobile to maximize video+content area) -->
+  <!-- Slim Top Bar -->
   <header class="top-bar">
     <div class="top-bar-inner">
       <div class="brand">
@@ -35,27 +35,37 @@
           <span class="stat-div"></span>
           <span class="stat-item"><strong id="progress-vocab">0/10</strong><span class="stat-unit"> words</span></span>
         </div>
-        <button type="button" id="btn-pip-mode" class="pill-btn" aria-pressed="false" title="YouTubeアプリの小窓再生(Premium広告なし)に最適化">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="9" width="8" height="6" rx="1" fill="currentColor" opacity="0.25"/><path d="M2 17h20"/></svg>
-          <span class="pill-label">PiPモード</span>
-        </button>
         <button type="button" id="theme-toggle" class="icon-circle" aria-label="テーマを切り替え"></button>
       </div>
     </div>
   </header>
 
   <div class="app-shell">
-    <!-- Sticky Media Dock (Stays pinned at top on mobile while scrolling content!) -->
-    <aside class="media-dock" id="media-dock" aria-label="動画プレイヤーとクリップ選択">
-      <div class="player-frame" id="player-frame">
-        <div class="video-stage">
-          <div id="yt-player"></div>
+    <!-- Sticky Audio Dock -->
+    <aside class="media-dock" id="media-dock" aria-label="音声プレイヤーとクリップ選択">
+      <audio id="audio-player" preload="metadata"></audio>
+
+      <div class="audio-card" id="audio-card">
+        <div class="audio-top-row">
+          <div class="audio-title-wrap">
+            <span class="status-dot" id="player-status-dot" aria-hidden="true"></span>
+            <span class="audio-clip-label" id="player-clip-label">CLIP 01 · 理想のスケジュールと現実</span>
+          </div>
+          <span class="audio-badge">AD-FREE</span>
         </div>
 
-        <!-- Compact Sleek Transport Bar -->
+        <div class="audio-seek-row">
+          <input type="range" id="audio-seek" class="audio-seek" min="0" max="45.2" step="0.1" value="0" aria-label="再生位置" />
+          <span class="audio-time-pair">
+            <span id="current-time-display">0:00</span>
+            <span>/</span>
+            <span id="clip-duration-display">0:45</span>
+          </span>
+        </div>
+
         <div class="transport-bar">
           <div class="transport-left">
-            <button type="button" id="btn-play-clip" class="t-btn t-primary" aria-label="このクリップを再生">
+            <button type="button" id="btn-play-clip" class="t-btn t-primary" aria-label="再生または一時停止">
               <svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
               <span>再生</span>
             </button>
@@ -70,40 +80,16 @@
           </div>
           <div class="transport-right">
             <button type="button" id="btn-speed-cycle" class="t-speed" aria-label="再生速度を切り替え">1.0x</button>
-            <span class="t-time" id="current-time-display">0:12</span>
           </div>
         </div>
       </div>
 
-      <!-- PiP / YouTube Premium Ad-Free Bar (shown when PiP Mode is ON) -->
-      <div class="pip-banner" id="pip-banner" hidden>
-        <div class="pip-banner-text">
-          <strong>YouTubeアプリ連携（広告ゼロ・PiP）</strong>
-          <span>YouTubeアプリで再生し、小窓（PiP）にしたまま下で学習できます</span>
-        </div>
-        <a id="pip-open-yt" class="pip-launch-btn" href="https://www.youtube.com/watch?v=arj7oStGLkU&t=12s" target="_blank" rel="noopener noreferrer">
-          <svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
-          <span>この位置から開く</span>
-        </a>
-      </div>
-
-      <!-- Horizontal Clip Switcher (Always reachable right below the video) -->
+      <!-- Horizontal Clip Switcher -->
       <div class="clip-strip-wrap">
         <div id="clip-list" class="clip-strip" role="listbox" aria-label="クリップ切り替え"></div>
       </div>
 
-      <!-- Subtle Premium / Direct Link Tip (collapsible) -->
-      <details class="ad-tip">
-        <summary>
-          <span>Premiumなのに広告が出る場合</span>
-          <a id="youtube-direct-link" href="https://www.youtube.com/watch?v=arj7oStGLkU&t=12s" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">YouTubeで開く ↗</a>
-        </summary>
-        <p>
-          スマホの埋め込み動画ではセキュリティ仕様によりYouTubeのログイン状態が引き継がれず広告が出ることがあります。右上の<strong>「PiPモード」</strong>をONにしてYouTubeアプリで再生→小窓（ピクチャ・イン・ピクチャ）にすると、<strong>広告なし＆画面を広く</strong>学習できます。
-        </p>
-      </details>
-
-      <!-- Desktop Lesson Info Card (hidden on mobile to keep screen clean) -->
+      <!-- Desktop Lesson Info Card -->
       <div class="desktop-lesson-card">
         <div class="lesson-meta-row">
           <span class="meta-tag" id="lesson-level">英検1級 Part 2 &amp; Part 4</span>
@@ -112,12 +98,13 @@
         <h1 class="lesson-h1" id="lesson-title"></h1>
         <p class="lesson-speaker" id="lesson-subtitle"></p>
         <p class="lesson-desc" id="lesson-summary"></p>
+        <p class="source-credit" id="source-credit"></p>
       </div>
     </aside>
 
     <!-- Main Learning Workspace -->
     <main class="study-area">
-      <!-- Desktop / Tablet Tab Bar (Mobile uses fixed bottom nav) -->
+      <!-- Desktop / Tablet Tab Bar -->
       <nav class="desktop-tabs" role="tablist" aria-label="学習モード">
         <button type="button" class="d-tab" role="tab" data-tab="script" aria-selected="true">解説・スクリプト</button>
         <button type="button" class="d-tab" role="tab" data-tab="dictation" aria-selected="false">ディクテーション</button>
@@ -130,7 +117,7 @@
         <div class="clip-header-card">
           <div class="clip-header-top">
             <div>
-              <span class="eyebrow" id="active-clip-range">CLIP 01 · 0:00 – 0:48</span>
+              <span class="eyebrow" id="active-clip-range">CLIP 01 · 0:24 – 1:10</span>
               <h2 class="clip-h2" id="active-clip-heading"></h2>
             </div>
             <button type="button" id="btn-mark-done" class="done-btn" aria-pressed="false">
@@ -213,6 +200,8 @@
           <button type="button" id="btn-reset-quiz" class="btn-ghost">クイズをやり直す</button>
         </div>
       </section>
+
+      <p class="mobile-credit" id="mobile-credit"></p>
     </main>
   </div>
 
@@ -236,7 +225,7 @@
     </button>
   </nav>
 
-  <script src="lesson-data.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="lesson-data.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -8,43 +8,47 @@ const LESSON_DATA = {
   originalTitle: "Inside the mind of a master procrastinator",
   speaker: "Tim Urban (Wait But Why ブロガー)",
   youtubeId: "arj7oStGLkU",
+  audioUrl: "https://download.ted.com/talks/TimUrban_2016.mp3",
+  audioOffset: 11.8,
+  sourceUrl: "https://www.ted.com/talks/tim_urban_inside_the_mind_of_a_master_procrastinator",
+  credit: "Audio: Tim Urban / TED (CC BY-NC-ND)",
   level: "英検1級 Part 2 & Part 4 対策",
   estimatedMinutes: 20,
   summary:
-    "世界中で6,000万回以上再生された伝説のTEDトーク。「締め切りギリギリまで動けない脳の仕組み」をユーモアたっぷりに語りつつ、後半は人生の本質に迫る名スピーチです。ネイティブ特有の自然なスピード・皮肉（sarcasm）・音声変化と、英検1級レベルの抽象語彙を同時にマスターしましょう。",
+    "世界中で再生された伝説のTEDトーク。「締め切りギリギリまで動けない脳の仕組み」をユーモアたっぷりに語りつつ、後半は人生の本質に迫る名スピーチです。広告ゼロのTED公式音声で、ネイティブ特有のスピード・皮肉・音声変化と英検1級レベルの抽象語彙をマスターしましょう。",
   clips: [
     {
       id: "clip-1",
       number: 1,
       title: "理想のスケジュールと現実",
       subtitle: "ネイティブの自然なつなぎ言葉とユーモア表現",
-      start: 12,
-      end: 58,
-      durationLabel: "0:12 – 0:58",
+      start: 24.4,
+      end: 69.6,
+      durationLabel: "0:24 – 1:10",
       eikenPoint: "Part 4（リアルな語り）に頻出するフィラーや口語表現の聞き流し力を鍛える",
       transcript: [
         {
-          start: 12.6,
+          start: 24.4,
           en: "So in college, I was a government major, which means I had to write a lot of papers.",
           ja: "大学時代、僕は政治学専攻でした。つまり、レポートを山ほど書かなきゃいけなかったんです。"
         },
         {
-          start: 19.4,
+          start: 31.2,
           en: "Now, when a normal student writes a paper, they might spread the work out a little like this.",
           ja: "さて、普通の学生がレポートを書くときは、こんなふうに作業を少しずつ分散させますよね。"
         },
         {
-          start: 23.9,
+          start: 35.7,
           en: "So, you know — you get started maybe a little slowly, but you get enough done in the first week that, with some heavier days later on, everything gets done, things stay civil.",
           ja: "ほら、最初はちょっとスロースタートかもしれないけど、最初の1週間である程度終わらせておけば、後半に少し忙しい日があっても全部終わって、平和に（修羅場にならずに）済むんです。"
         },
         {
-          start: 35.9,
+          start: 47.7,
           en: "And I would want to do that like that. That would be the plan. I would have it all ready to go, but then, actually, the paper would come along, and then I would kind of do this.",
           ja: "僕もそうやりたいんですよ。それが計画なんです。準備万端にしておくのに、いざレポートの時期が来ると、まあこんな感じになっちゃうんです（直前までゼロで最後に爆上げ）。"
         },
         {
-          start: 48.8,
+          start: 60.6,
           en: "And that would happen every single paper. But then came my 90-page senior thesis, a paper you're supposed to spend a year on.",
           ja: "それが毎回すべてのレポートで起きるんです。そしてついにやってきたのが90ページの卒業論文。1年かけて書くべき大作です。"
         }
@@ -98,23 +102,23 @@ const LESSON_DATA = {
       number: 2,
       title: "即効快楽モンキーの正体",
       subtitle: "英検1級レベルの抽象語彙が連続するコアパート",
-      start: 303,
-      end: 326,
-      durationLabel: "5:03 – 5:26",
+      start: 315.3,
+      end: 337.6,
+      durationLabel: "5:15 – 5:38",
       eikenPoint: "Part 2（講義形式）で頻出する比喩表現・口語的な定義づけを正確にキャッチする",
       transcript: [
         {
-          start: 303.5,
+          start: 315.3,
           en: "The Instant Gratification Monkey does not seem like a guy you want behind the wheel.",
           ja: "この『即効快楽モンキー』は、どう見てもハンドルを握らせたいタイプには見えませんよね。"
         },
         {
-          start: 307.5,
+          start: 319.3,
           en: "He lives entirely in the present moment. He has no memory of the past, no knowledge of the future, and he only cares about two things: easy and fun.",
           ja: "彼は完全に『今この瞬間』だけを生きています。過去の記憶もなければ、未来の知識もない。気にするのはたった2つ、『楽ちん』と『楽しい』だけです。"
         },
         {
-          start: 316.3,
+          start: 328.1,
           en: "Now, in the animal world, that works fine. If you're a dog and you spend your whole life doing nothing other than easy and fun things, you're a huge success!",
           ja: "さて、動物の世界ならそれでうまくいきます。もしあなたが犬で、一生『楽ちんで楽しいこと』だけして過ごしたなら、大成功ですからね！"
         }
@@ -168,23 +172,23 @@ const LESSON_DATA = {
       number: 3,
       title: "ダーク・プレイグラウンド",
       subtitle: "罪悪感まみれの遊び時間と英語特有の「皮肉」",
-      start: 403,
-      end: 427,
-      durationLabel: "6:43 – 7:07",
+      start: 415.7,
+      end: 438.4,
+      durationLabel: "6:56 – 7:18",
       eikenPoint: "話者の皮肉（irony / sarcasm）や感情のニュアンスを正しく読み取る力",
       transcript: [
         {
-          start: 403.9,
+          start: 415.7,
           en: "Now, the Dark Playground is a place that all of you procrastinators out there know very well.",
           ja: "さて、『ダーク・プレイグラウンド（暗黒の遊び場）』は、会場の先延ばし魔の皆さんなら誰もがよ〜く知っている場所です。"
         },
         {
-          start: 410.9,
+          start: 422.7,
           en: "It's where leisure activities happen at times when leisure activities are not supposed to be happening.",
           ja: "それは、本来なら遊んでいるはずではない時間帯に、娯楽が繰り広げられる場所のことです。"
         },
         {
-          start: 416.4,
+          start: 428.2,
           en: "The fun you have in the Dark Playground isn't actually fun, because it's completely unearned, and the air is filled with guilt, dread, anxiety, self-hatred — all of those good procrastinator feelings.",
           ja: "ダーク・プレイグラウンドでの楽しみは、実はちっとも楽しくありません。だって全く『自分で勝ち取った（やるべきことを終えた後の）』楽しみじゃないから。空気は罪悪感、恐怖、不安、自己嫌悪で満たされています――そう、先延ばし魔におなじみの『素敵な』感情ばかりですね。"
         }
@@ -231,18 +235,18 @@ const LESSON_DATA = {
       number: 4,
       title: "パニック・モンスター覚醒！",
       subtitle: "締め切り直前に奇跡を起こす脳の守護神",
-      start: 454,
-      end: 472,
-      durationLabel: "7:34 – 7:52",
+      start: 466.2,
+      end: 484.0,
+      durationLabel: "7:46 – 8:04",
       eikenPoint: "英検1級の超頻出語 dormant を文脈と音で完全に定着させる",
       transcript: [
         {
-          start: 454.4,
+          start: 466.2,
           en: "Now, the Panic Monster is dormant most of the time, but he suddenly wakes up anytime a deadline gets too close or there's danger of public embarrassment, a career disaster, or some other scary consequence.",
           ja: "さて、『パニック・モンスター』は普段ほとんど休眠状態なのですが、締め切りが迫りすぎたり、人前で恥をかく危険やキャリア上の大惨事、その他恐ろしい結末の危機が迫ると、突如として目を覚ますのです。"
         },
         {
-          start: 467.8,
+          start: 479.6,
           en: "And importantly, he's the only thing the Monkey is terrified of.",
           ja: "そして重要なことに、彼はあのモンキーが唯一心底怯える存在なのです。"
         }
@@ -289,28 +293,28 @@ const LESSON_DATA = {
       number: 5,
       title: "自分の人生の『観客』になってない？",
       subtitle: "笑いのあとに胸を打つ、長期的な先延ばしの真実",
-      start: 718,
-      end: 757,
-      durationLabel: "11:58 – 12:37",
+      start: 729.8,
+      end: 768.5,
+      durationLabel: "12:10 – 12:49",
       eikenPoint: "スピーチの転調（ユーモア → 深刻な主張）と、話者の本質的なメッセージ（Main Idea）を掴む",
       transcript: [
         {
-          start: 718.0,
+          start: 729.8,
           en: "And it's this long-term kind of procrastination that's much less visible and much less talked about than the funnier, short-term deadline-based kind.",
           ja: "そして、面白おかしく語られる短期的な締め切り型の先延ばしよりも、ずっと目に見えにくく、語られることも少ないのが、この『長期的な先延ばし』なのです。"
         },
         {
-          start: 726.7,
+          start: 738.5,
           en: "It's usually suffered quietly and privately. And it can be the source of a huge amount of long-term unhappiness, and regrets.",
           ja: "それはたいてい、静かに、誰にも知られずに苦しまれるものです。そして、膨大な長期的不幸と後悔の源になり得るのです。"
         },
         {
-          start: 736.6,
+          start: 748.4,
           en: "And I thought, that's why those people are emailing, and that's why they're in such a bad place. It's not that they're cramming for some project.",
           ja: "そこで気づいたんです。だからこそ読者たちはメールをくれたし、あんなにもつらい状況にいるんだと。何かのプロジェクトのために一夜漬けしているからじゃないんです。"
         },
         {
-          start: 744.8,
+          start: 756.6,
           en: "It's that long-term procrastination has made them feel like a spectator, at times, in their own lives. The frustration is not that they couldn't achieve their dreams; it's that they weren't even able to start chasing them.",
           ja: "長期的な先延ばしのせいで、時に『自分の人生の観客』のように感じてしまっているからなのです。彼らの苛立ちは、夢を叶えられなかったことではありません。夢を追いかけ始めることすらできなかったことにあるのです。"
         }

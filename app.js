@@ -4,6 +4,11 @@
   const STORAGE_KEY = "eiken1_listening_lab_v2_" + LESSON_DATA.id;
   const SPEED_STEPS = [1, 1.25, 0.75];
 
+  const PLAY_ICON =
+    '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>';
+  const PAUSE_ICON =
+    '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+
   const state = {
     activeClipIndex: 0,
     activeTab: "script",
@@ -13,7 +18,6 @@
     activeBlankIndex: 0,
     dictationChoices: [],
     loopEnabled: true,
-    pipMode: false,
     speedIndex: 0,
     completedClips: new Set(),
     masteredVocab: new Set(),
@@ -21,10 +25,9 @@
     theme: "light"
   };
 
-  let player = null;
-  let playerReady = false;
-  let pendingPlay = false;
+  let audio = null;
   let pendingSeek = null;
+  let isSeeking = false;
   let pollTimer = null;
   let blurTimer = null;
 
@@ -48,9 +51,6 @@
       if (saved.theme === "dark" || saved.theme === "light") {
         state.theme = saved.theme;
       }
-      if (typeof saved.pipMode === "boolean") {
-        state.pipMode = saved.pipMode;
-      }
     } catch (_) {
       // Ignore storage errors
     }
@@ -63,8 +63,7 @@
         JSON.stringify({
           completedClips: Array.from(state.completedClips),
           masteredVocab: Array.from(state.masteredVocab),
-          theme: state.theme,
-          pipMode: state.pipMode
+          theme: state.theme
         })
       );
     } catch (_) {
@@ -110,21 +109,6 @@
     }
   }
 
-  // --- PiP Mode ---
-  function applyPipMode() {
-    const btn = document.getElementById("btn-pip-mode");
-    const frame = document.getElementById("player-frame");
-    const banner = document.getElementById("pip-banner");
-
-    btn.setAttribute("aria-pressed", String(state.pipMode));
-    frame.hidden = state.pipMode;
-    banner.hidden = !state.pipMode;
-
-    if (state.pipMode && playerReady && player && typeof player.pauseVideo === "function") {
-      player.pauseVideo();
-    }
-  }
-
   // --- Progress Header ---
   function updateProgress() {
     document.getElementById("progress-clips").textContent =
@@ -142,6 +126,50 @@
     document.getElementById("lesson-subtitle").textContent =
       LESSON_DATA.originalTitle + " — " + LESSON_DATA.speaker;
     document.getElementById("lesson-summary").textContent = LESSON_DATA.summary;
+
+    const creditHtml =
+      "<span>" +
+      escapeHtml(LESSON_DATA.credit || "") +
+      "</span>" +
+      '<a href="' +
+      escapeHtml(LESSON_DATA.sourceUrl || "#") +
+      '" target="_blank" rel="noopener noreferrer">TED公式ページで動画を見る ↗</a>';
+
+    const deskCredit = document.getElementById("source-credit");
+    if (deskCredit) deskCredit.innerHTML = creditHtml;
+    const mobCredit = document.getElementById("mobile-credit");
+    if (mobCredit) mobCredit.innerHTML = creditHtml;
+  }
+
+  // --- Audio UI Helpers ---
+  function syncPlayButtonUI() {
+    const isPlaying = Boolean(audio && !audio.paused && !audio.ended);
+    const btn = document.getElementById("btn-play-clip");
+    if (btn) {
+      btn.innerHTML = isPlaying
+        ? PAUSE_ICON + "<span>一時停止</span>"
+        : PLAY_ICON + "<span>再生</span>";
+    }
+    const dot = document.getElementById("player-status-dot");
+    if (dot) {
+      dot.classList.toggle("is-playing", isPlaying);
+    }
+  }
+
+  function updateSeekUI(absoluteSec) {
+    const clip = getActiveClip();
+    const clipDuration = Math.max(1, clip.end - clip.start);
+    const rel = Math.max(0, Math.min(clipDuration, absoluteSec - clip.start));
+
+    const seekEl = document.getElementById("audio-seek");
+    if (seekEl && !isSeeking) {
+      seekEl.max = String(clipDuration);
+      seekEl.value = rel.toFixed(1);
+    }
+    const curEl = document.getElementById("current-time-display");
+    if (curEl) curEl.textContent = formatTime(rel);
+    const durEl = document.getElementById("clip-duration-display");
+    if (durEl) durEl.textContent = formatTime(clipDuration);
   }
 
   // --- Render Horizontal Clip Strip ---
@@ -159,7 +187,7 @@
       btn.innerHTML =
         '<span class="chip-num">' + (isDone ? "✓" : "0" + clip.number) + "</span>" +
         "<span>" + escapeHtml(clip.title) + "</span>";
-      btn.addEventListener("click", () => selectClip(idx, !state.pipMode));
+      btn.addEventListener("click", () => selectClip(idx, true));
       strip.appendChild(btn);
 
       const wrap = strip.parentElement;
@@ -175,12 +203,13 @@
   // --- Render Active Clip ---
   function renderActiveClip() {
     const clip = getActiveClip();
-    const ytUrl =
-      "https://www.youtube.com/watch?v=" + LESSON_DATA.youtubeId + "&t=" + clip.start + "s";
 
-    document.getElementById("youtube-direct-link").href = ytUrl;
-    document.getElementById("pip-open-yt").href = ytUrl;
-    document.getElementById("current-time-display").textContent = formatTime(clip.start);
+    const playerLabel = document.getElementById("player-clip-label");
+    if (playerLabel) {
+      playerLabel.textContent = "CLIP 0" + clip.number + " · " + clip.title;
+    }
+
+    updateSeekUI(clip.start);
 
     document.getElementById("active-clip-range").textContent =
       "CLIP 0" + clip.number + " · " + clip.durationLabel;
@@ -240,11 +269,12 @@
       card.dataset.start = String(line.start);
       card.setAttribute("aria-label", formatTime(line.start) + " から再生: " + line.en);
 
+      const relSec = Math.max(0, line.start - clip.start);
       let html =
         '<div class="script-meta">' +
           '<span class="script-play-hint">' +
-            '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6,4 20,12 6,20"/></svg>' +
-            "<span>" + formatTime(line.start) + "</span>" +
+            PLAY_ICON +
+            "<span>" + formatTime(relSec) + " (" + formatTime(line.start) + ")</span>" +
           "</span>" +
           "<span>タップで再生</span>" +
         "</div>" +
@@ -260,9 +290,11 @@
     });
 
     const now =
-      playerReady && player && typeof player.getCurrentTime === "function"
-        ? player.getCurrentTime()
-        : clip.start;
+      pendingSeek !== null
+        ? pendingSeek
+        : audio && audio.readyState >= 1
+          ? audio.currentTime
+          : clip.start;
     highlightActiveTranscriptLine(now);
   }
 
@@ -675,87 +707,123 @@
     }
   }
 
-  // --- YouTube IFrame Player ---
-  function initYouTubeAPI() {
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
+  // --- HTML5 Audio Player ---
+  function applyPendingSeekIfReady() {
+    if (!audio || pendingSeek === null || audio.readyState < 1) return false;
+    try {
+      audio.currentTime = pendingSeek;
+      pendingSeek = null;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
-  window.onYouTubeIframeAPIReady = function () {
-    const firstStart = LESSON_DATA.clips[0] ? LESSON_DATA.clips[0].start : 0;
-    const playerVars = {
-      rel: 0,
-      modestbranding: 1,
-      playsinline: 1,
-      cc_load_policy: 0,
-      start: firstStart
-    };
-    if (window.location.protocol.startsWith("http")) {
-      playerVars.origin = window.location.origin;
+  function handleTimeTick() {
+    if (!audio) return;
+    const clip = getActiveClip();
+    if (pendingSeek !== null) {
+      updateSeekUI(pendingSeek);
+      highlightActiveTranscriptLine(pendingSeek);
+      return;
     }
+    if (audio.readyState < 1) return;
 
-    player = new YT.Player("yt-player", {
-      width: "100%",
-      height: "100%",
-      videoId: LESSON_DATA.youtubeId,
-      playerVars: playerVars,
-      events: {
-        onReady: () => {
-          playerReady = true;
-          startTimePolling();
-          if (pendingPlay) {
-            const target = pendingSeek !== null ? pendingSeek : getActiveClip().start;
-            pendingPlay = false;
-            pendingSeek = null;
-            seekAndPlay(target);
-          }
-        }
+    const now = audio.currentTime;
+    updateSeekUI(now);
+    highlightActiveTranscriptLine(now);
+
+    if (!audio.paused && now >= clip.end) {
+      if (state.loopEnabled) {
+        audio.currentTime = clip.start;
+      } else {
+        audio.pause();
+        audio.currentTime = clip.start;
+        updateSeekUI(clip.start);
+        highlightActiveTranscriptLine(clip.start);
       }
+    }
+  }
+
+  function initAudioPlayer() {
+    audio = document.getElementById("audio-player");
+    if (!audio || !LESSON_DATA.audioUrl) return;
+
+    audio.src = LESSON_DATA.audioUrl;
+    audio.playbackRate = getPlaybackRate();
+    pendingSeek = getActiveClip().start;
+
+    audio.addEventListener("loadedmetadata", () => {
+      applyPendingSeekIfReady();
+      audio.playbackRate = getPlaybackRate();
     });
-  };
 
-  function startTimePolling() {
+    audio.addEventListener("canplay", () => {
+      applyPendingSeekIfReady();
+      audio.playbackRate = getPlaybackRate();
+    });
+
+    audio.addEventListener("play", syncPlayButtonUI);
+    audio.addEventListener("pause", syncPlayButtonUI);
+    audio.addEventListener("ended", syncPlayButtonUI);
+    audio.addEventListener("timeupdate", handleTimeTick);
+
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(() => {
-      if (!playerReady || !player || typeof player.getCurrentTime !== "function") return;
-      const now = player.getCurrentTime();
-      document.getElementById("current-time-display").textContent = formatTime(now);
-      highlightActiveTranscriptLine(now);
-
-      const clip = getActiveClip();
-      if (
-        state.loopEnabled &&
-        player.getPlayerState() === YT.PlayerState.PLAYING &&
-        now >= clip.end
-      ) {
-        player.seekTo(clip.start, true);
-      }
-    }, 200);
+    pollTimer = setInterval(handleTimeTick, 100);
   }
 
   function seekAndPlay(seconds) {
-    highlightActiveTranscriptLine(seconds);
-    document.getElementById("current-time-display").textContent = formatTime(seconds);
-    if (!playerReady || !player) {
-      pendingSeek = seconds;
-      pendingPlay = true;
-      return;
+    const clip = getActiveClip();
+    const clamped = Math.max(clip.start, Math.min(clip.end - 0.1, seconds));
+    updateSeekUI(clamped);
+    highlightActiveTranscriptLine(clamped);
+    if (!audio) return;
+
+    audio.playbackRate = getPlaybackRate();
+    if (audio.readyState >= 1) {
+      pendingSeek = null;
+      audio.currentTime = clamped;
+      audio.play().catch(() => {});
+    } else {
+      pendingSeek = clamped;
+      audio.load();
+      audio.play().catch(() => {});
     }
-    player.setPlaybackRate(getPlaybackRate());
-    player.seekTo(seconds, true);
-    player.playVideo();
   }
 
-  function playActiveClip() {
-    seekAndPlay(getActiveClip().start);
+  function togglePlayActiveClip() {
+    const clip = getActiveClip();
+    if (!audio) return;
+
+    if (!audio.paused) {
+      audio.pause();
+      return;
+    }
+
+    const now = audio.currentTime;
+    if (
+      audio.readyState >= 1 &&
+      pendingSeek === null &&
+      now >= clip.start &&
+      now < clip.end - 0.3
+    ) {
+      audio.playbackRate = getPlaybackRate();
+      audio.play().catch(() => {});
+    } else {
+      seekAndPlay(clip.start);
+    }
   }
 
   function selectClip(index, autoPlay) {
     state.activeClipIndex = index;
+    const clip = getActiveClip();
+    pendingSeek = clip.start;
+    if (audio && !autoPlay && !audio.paused) {
+      audio.pause();
+    }
     renderActiveClip();
     if (autoPlay) {
-      playActiveClip();
+      seekAndPlay(clip.start);
     }
   }
 
@@ -767,13 +835,7 @@
       applyTheme();
     });
 
-    document.getElementById("btn-pip-mode").addEventListener("click", () => {
-      state.pipMode = !state.pipMode;
-      saveState();
-      applyPipMode();
-    });
-
-    document.getElementById("btn-play-clip").addEventListener("click", playActiveClip);
+    document.getElementById("btn-play-clip").addEventListener("click", togglePlayActiveClip);
 
     document.getElementById("btn-prev-line").addEventListener("click", () => {
       const clip = getActiveClip();
@@ -783,9 +845,11 @@
         return;
       }
       const now =
-        playerReady && player && typeof player.getCurrentTime === "function"
-          ? player.getCurrentTime()
-          : clip.start;
+        pendingSeek !== null
+          ? pendingSeek
+          : audio && audio.readyState >= 1
+            ? audio.currentTime
+            : clip.start;
       let curIdx = 0;
       for (let i = 0; i < lines.length; i++) {
         if (now + 0.3 >= lines[i].start) {
@@ -803,6 +867,33 @@
       seekAndPlay(targetStart);
     });
 
+    const seekEl = document.getElementById("audio-seek");
+    if (seekEl) {
+      seekEl.addEventListener("pointerdown", () => {
+        isSeeking = true;
+      });
+      seekEl.addEventListener("input", () => {
+        const clip = getActiveClip();
+        const target = clip.start + Number(seekEl.value);
+        const curEl = document.getElementById("current-time-display");
+        if (curEl) curEl.textContent = formatTime(Number(seekEl.value));
+        highlightActiveTranscriptLine(target);
+      });
+      seekEl.addEventListener("change", () => {
+        isSeeking = false;
+        const clip = getActiveClip();
+        const target = Math.max(clip.start, Math.min(clip.end - 0.1, clip.start + Number(seekEl.value)));
+        if (!audio) return;
+        if (audio.readyState >= 1) {
+          pendingSeek = null;
+          audio.currentTime = target;
+        } else {
+          pendingSeek = target;
+          audio.load();
+        }
+      });
+    }
+
     const loopBtn = document.getElementById("btn-loop");
     loopBtn.addEventListener("click", () => {
       state.loopEnabled = !state.loopEnabled;
@@ -815,8 +906,8 @@
       state.speedIndex = (state.speedIndex + 1) % SPEED_STEPS.length;
       const rate = getPlaybackRate();
       speedBtn.textContent = rate.toFixed(rate === 1 ? 1 : 2).replace(/\.00$/, ".0") + "x";
-      if (playerReady && player) {
-        player.setPlaybackRate(rate);
+      if (audio) {
+        audio.playbackRate = rate;
       }
     });
 
@@ -873,12 +964,12 @@
   // --- Boot ---
   loadState();
   applyTheme();
-  applyPipMode();
   renderHero();
   updateProgress();
   renderActiveClip();
   renderVocab();
   renderQuiz();
   bindEvents();
-  initYouTubeAPI();
+  initAudioPlayer();
+  syncPlayButtonUI();
 })();

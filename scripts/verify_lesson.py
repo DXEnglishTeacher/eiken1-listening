@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify lesson-data.js clip/transcript timestamps and text against YouTube captions."""
+"""Verify lesson-data.js audio URL, clip/transcript timestamps, and text against official YouTube captions."""
 
 import html
 import json
@@ -21,6 +21,27 @@ def load_lesson_data(js_path: pathlib.Path) -> dict:
     )
     out = subprocess.check_output(["osascript", "-l", "JavaScript", "-e", script], text=True)
     return json.loads(out.strip())
+
+
+def verify_audio_url(audio_url: str) -> tuple[bool, str]:
+    """Verify audioUrl responds 200 with audio/* Content-Type and byte-range seeking support."""
+    req = urllib.request.Request(
+        audio_url,
+        method="HEAD",
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        status = resp.status
+        ctype = (resp.headers.get("Content-Type") or "").lower()
+        ranges = (resp.headers.get("Accept-Ranges") or "").lower()
+        length = resp.headers.get("Content-Length") or "?"
+        if status != 200:
+            return False, f"audioUrl HTTP {status} != 200"
+        if not ctype.startswith("audio/"):
+            return False, f"audioUrl Content-Type={ctype!r} is not audio/*"
+        if ranges != "bytes":
+            return False, f"audioUrl Accept-Ranges={ranges!r} != 'bytes' (seeking unreliable)"
+        return True, f"{ctype}, {length} bytes, Accept-Ranges={ranges}"
 
 
 def fetch_youtube_captions(video_id: str) -> list[tuple[float, float, str]]:
@@ -73,7 +94,7 @@ def fetch_youtube_captions(video_id: str) -> list[tuple[float, float, str]]:
 
 
 def fmt_time(sec: float) -> str:
-    s = int(round(sec))
+    s = int(sec + 0.5)
     return f"{s // 60}:{s % 60:02d}"
 
 
@@ -91,23 +112,35 @@ def is_stage_direction(text: str) -> bool:
 def verify(lesson_path: pathlib.Path) -> int:
     lesson = load_lesson_data(lesson_path)
     video_id = lesson["youtubeId"]
-    segs = fetch_youtube_captions(video_id)
+    audio_url = lesson.get("audioUrl")
+    offset = float(lesson.get("audioOffset", 0.0))
 
+    errors: list[str] = []
+
+    if not audio_url:
+        errors.append("Missing 'audioUrl' in LESSON_DATA")
+        audio_summary = "missing"
+    else:
+        ok, audio_summary = verify_audio_url(audio_url)
+        if not ok:
+            errors.append(audio_summary)
+
+    segs = fetch_youtube_captions(video_id)
     speech_segs = [(s, e, t) for s, e, t in segs if not is_stage_direction(t)]
     first_speech_start = speech_segs[0][0] if speech_segs else segs[0][0]
 
-    errors: list[str] = []
     total_lines = 0
 
     for clip in lesson["clips"]:
         cid = clip["id"]
         c_start = float(clip["start"])
         c_end = float(clip["end"])
+        yt_c_start = c_start - offset
         expected_label = f"{fmt_time(c_start)} \u2013 {fmt_time(c_end)}"
 
-        if c_start < first_speech_start - 3.0:
+        if yt_c_start < first_speech_start - 3.0:
             errors.append(
-                f"[{cid}] start={c_start}s is >3s before first speech ({first_speech_start:.1f}s; likely includes BGM/intro)"
+                f"[{cid}] audio start={c_start}s (YT {yt_c_start:.1f}s) is >3s before first speech ({first_speech_start:.1f}s; likely includes BGM/intro)"
             )
 
         if clip.get("durationLabel") != expected_label:
@@ -138,9 +171,11 @@ def verify(lesson_path: pathlib.Path) -> int:
                 )
             prev_start = l_start
 
+            yt_l_start = l_start - offset
             next_start = float(lines[idx]["start"]) if idx < len(lines) else c_end
+            yt_next_start = next_start - offset
             window_text = " ".join(
-                t for s, e, t in segs if e >= l_start - 2.0 and s <= next_start + 2.0
+                t for s, e, t in segs if e >= yt_l_start - 2.0 and s <= yt_next_start + 2.0
             )
             window_tokens = set(tokenize(window_text))
             line_tokens = tokenize(line["en"])
@@ -152,7 +187,7 @@ def verify(lesson_path: pathlib.Path) -> int:
             if ratio < 0.80:
                 missing = [w for w in major_tokens if w not in window_tokens]
                 errors.append(
-                    f"[{cid} line {idx}] caption match {ratio:.0%} (<80%) at [{l_start:.1f}..{next_start:.1f}]; missing={missing}"
+                    f"[{cid} line {idx}] caption match {ratio:.0%} (<80%) at audio [{l_start:.1f}..{next_start:.1f}] / YT [{yt_l_start:.1f}..{yt_next_start:.1f}]; missing={missing}"
                 )
 
         for seg in clip.get("dictation", {}).get("segments", []):
@@ -169,8 +204,8 @@ def verify(lesson_path: pathlib.Path) -> int:
         return 1
 
     print(
-        f"PASS: Verified {len(lesson['clips'])} clips and {total_lines} transcript lines for video {video_id} "
-        f"(first speech at {first_speech_start:.1f}s)."
+        f"PASS: Verified audio ({audio_summary}), {len(lesson['clips'])} clips, and {total_lines} transcript lines "
+        f"(audioOffset={offset}s, first YT speech={first_speech_start:.1f}s)."
     )
     return 0
 

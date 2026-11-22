@@ -237,44 +237,99 @@ button, input {
   min-width: 0;
 }
 
-.player-frame {
-  background: #0d0f14;
-  border-radius: var(--radius);
-  overflow: hidden;
+.audio-card {
+  background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
   max-width: 100%;
   min-width: 0;
 }
 
-.video-stage {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
+.audio-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.audio-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+  flex-shrink: 0;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.status-dot.is-playing {
+  background: var(--success);
+  box-shadow: 0 0 0 4px var(--success-soft);
+}
+
+.audio-clip-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.video-stage iframe,
-.video-stage #yt-player {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  border: 0;
+.audio-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal);
+  flex-shrink: 0;
 }
 
-/* Transport Bar integrated cleanly under video */
+.audio-seek-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-seek {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  height: 6px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.audio-time-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+/* Transport Bar integrated cleanly in audio card */
 .transport-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px;
-  background: #14171f;
-  color: #f3f4f6;
 }
 
 .transport-left,
@@ -288,97 +343,44 @@ button, input {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border: 0;
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e7eb;
-  padding: 6px 11px;
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 7px 12px;
+  border-radius: 9px;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .t-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--border-strong);
 }
 
 .t-btn.t-primary {
-  background: #ffffff;
-  color: #111318;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
 }
 
 .t-btn.is-active {
-  background: rgba(96, 165, 250, 0.25);
-  color: #93c5fd;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .t-speed {
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: transparent;
-  color: #f3f4f6;
-  padding: 4px 9px;
-  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
   font-size: 0.76rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-}
-
-.t-time {
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: #9ca3af;
-  min-width: 34px;
-  text-align: right;
-}
-
-/* PiP Mode Banner */
-.pip-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  background: #14171f;
-  color: #f3f4f6;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.pip-banner[hidden] {
-  display: none;
-}
-
-.pip-banner-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.pip-banner-text strong {
-  font-size: 0.84rem;
-}
-
-.pip-banner-text span {
-  font-size: 0.74rem;
-  color: #9ca3af;
-}
-
-.pip-launch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #ef4444;
-  color: #fff;
-  text-decoration: none;
-  padding: 8px 13px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 /* Clip Strip */
@@ -442,39 +444,28 @@ button, input {
   color: #fff;
 }
 
-/* Ad tip */
-.ad-tip {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 12px;
-  font-size: 0.76rem;
+.source-credit {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.74rem;
   color: var(--text-3);
-}
-
-.ad-tip summary {
-  cursor: pointer;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  list-style: none;
-  font-weight: 600;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.ad-tip summary::-webkit-details-marker {
-  display: none;
-}
-
-.ad-tip summary a {
+.source-credit a,
+.mobile-credit a {
   color: var(--accent);
   text-decoration: none;
   font-weight: 700;
 }
 
-.ad-tip p {
-  margin: 8px 0 0;
-  line-height: 1.6;
-  color: var(--text-2);
+.mobile-credit {
+  display: none;
 }
 
 /* Desktop Lesson Card */
@@ -1237,48 +1228,41 @@ button, input {
     font-size: 0.72rem;
   }
 
-  /* Pinned Sticky Video + Clip Switcher */
+  /* Pinned Slim Audio Dock + Clip Switcher */
   .media-dock {
     position: sticky;
     top: 0;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 0 0 8px;
+    padding: 8px 12px 10px;
     gap: 8px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   }
 
-  .player-frame {
-    border-radius: 0;
-    border: 0;
-    box-shadow: none;
-  }
-
-  /* Reliable 16:9 ratio on iOS Safari without aspect-ratio/max-height conflict */
-  .video-stage {
-    width: 100%;
-    height: 0;
-    padding-bottom: 56.25%;
-    aspect-ratio: auto;
-  }
-
-  .pip-banner {
-    margin: 8px 12px 0;
+  .audio-card {
     padding: 10px 12px;
+    gap: 8px;
   }
 
   .clip-strip-wrap {
-    padding: 0 12px;
-  }
-
-  .ad-tip {
-    margin: 0 12px;
-    padding: 6px 10px;
-    font-size: 0.72rem;
+    padding: 0;
   }
 
   .study-area {
     padding: 14px 12px 16px;
+  }
+
+  .mobile-credit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 22px 0 4px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.74rem;
+    color: var(--text-3);
   }
 
   .clip-header-card {
@@ -1334,15 +1318,17 @@ button, input {
   }
 
   /* Compact layout when software keyboard is open in type mode */
-  body.keyboard-compact .video-stage {
-    padding-bottom: 0;
-    height: 0;
-    opacity: 0;
-    pointer-events: none;
+  body.keyboard-compact .media-dock {
+    padding: 6px 12px;
   }
 
+  body.keyboard-compact .audio-card {
+    padding: 6px 10px;
+  }
+
+  body.keyboard-compact .audio-top-row,
+  body.keyboard-compact .audio-seek-row,
   body.keyboard-compact .clip-strip-wrap,
-  body.keyboard-compact .ad-tip,
   body.keyboard-compact .bottom-nav,
   body.keyboard-compact #panel-dictation .clip-header-card {
     display: none;
