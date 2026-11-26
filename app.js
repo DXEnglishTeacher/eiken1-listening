@@ -1,8 +1,21 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "eiken1_listening_lab_v2_" + LESSON_DATA.id;
+  const ALL_LESSONS =
+    typeof LESSONS !== "undefined" && Array.isArray(LESSONS) && LESSONS.length
+      ? LESSONS
+      : [LESSON_DATA];
+  const ACTIVE_LESSON_KEY = "eiken1_listening_lab_active_lesson";
+  const THEME_KEY = "eiken1_listening_lab_theme";
   const SPEED_STEPS = [1, 1.25, 0.75];
+
+  function getStorageKey(lessonId) {
+    return "eiken1_listening_lab_v2_" + lessonId;
+  }
+
+  function getActiveLesson() {
+    return ALL_LESSONS[state.activeLessonIndex] || ALL_LESSONS[0];
+  }
 
   const PLAY_ICON =
     '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>';
@@ -10,6 +23,7 @@
     '<svg class="ico-sm" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
 
   const state = {
+    activeLessonIndex: 0,
     activeClipIndex: 0,
     activeTab: "script",
     subtitleMode: "both", // "none" | "en" | "both"
@@ -32,24 +46,67 @@
   let blurTimer = null;
 
   // --- Persistence ---
-  function loadState() {
+  function resolveInitialLessonIndex() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          state.theme = "dark";
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("lesson");
+      if (q) {
+        const byId = ALL_LESSONS.findIndex((l) => l.id === q);
+        if (byId !== -1) return byId;
+        const num = Number(q);
+        if (Number.isInteger(num) && num >= 1 && num <= ALL_LESSONS.length) {
+          return num - 1;
         }
+      }
+      const savedId = localStorage.getItem(ACTIVE_LESSON_KEY);
+      if (savedId) {
+        const idx = ALL_LESSONS.findIndex((l) => l.id === savedId);
+        if (idx !== -1) return idx;
+      }
+    } catch (_) {
+      // Ignore query/storage errors
+    }
+    return 0;
+  }
+
+  function readLessonProgress(lessonId) {
+    try {
+      const raw = localStorage.getItem(getStorageKey(lessonId));
+      if (!raw) return { completedClips: [], masteredVocab: [], theme: null };
+      const saved = JSON.parse(raw);
+      return {
+        completedClips: Array.isArray(saved.completedClips) ? saved.completedClips : [],
+        masteredVocab: Array.isArray(saved.masteredVocab) ? saved.masteredVocab : [],
+        theme: saved.theme === "dark" || saved.theme === "light" ? saved.theme : null
+      };
+    } catch (_) {
+      return { completedClips: [], masteredVocab: [], theme: null };
+    }
+  }
+
+  function loadLessonProgress() {
+    const lesson = getActiveLesson();
+    const prog = readLessonProgress(lesson.id);
+    state.completedClips = new Set(prog.completedClips);
+    state.masteredVocab = new Set(prog.masteredVocab);
+  }
+
+  function loadState() {
+    state.activeLessonIndex = resolveInitialLessonIndex();
+    loadLessonProgress();
+    try {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "dark" || savedTheme === "light") {
+        state.theme = savedTheme;
         return;
       }
-      const saved = JSON.parse(raw);
-      if (Array.isArray(saved.completedClips)) {
-        state.completedClips = new Set(saved.completedClips);
+      const prog = readLessonProgress(getActiveLesson().id);
+      if (prog.theme) {
+        state.theme = prog.theme;
+        return;
       }
-      if (Array.isArray(saved.masteredVocab)) {
-        state.masteredVocab = new Set(saved.masteredVocab);
-      }
-      if (saved.theme === "dark" || saved.theme === "light") {
-        state.theme = saved.theme;
+      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        state.theme = "dark";
       }
     } catch (_) {
       // Ignore storage errors
@@ -58,14 +115,16 @@
 
   function saveState() {
     try {
+      const lesson = getActiveLesson();
       localStorage.setItem(
-        STORAGE_KEY,
+        getStorageKey(lesson.id),
         JSON.stringify({
           completedClips: Array.from(state.completedClips),
           masteredVocab: Array.from(state.masteredVocab),
           theme: state.theme
         })
       );
+      localStorage.setItem(THEME_KEY, state.theme);
     } catch (_) {
       // Ignore storage errors
     }
@@ -80,7 +139,7 @@
   }
 
   function getActiveClip() {
-    return LESSON_DATA.clips[state.activeClipIndex];
+    return getActiveLesson().clips[state.activeClipIndex];
   }
 
   function getPlaybackRate() {
@@ -111,28 +170,83 @@
 
   // --- Progress Header ---
   function updateProgress() {
+    const lesson = getActiveLesson();
     document.getElementById("progress-clips").textContent =
-      state.completedClips.size + "/" + LESSON_DATA.clips.length;
+      state.completedClips.size + "/" + lesson.clips.length;
     document.getElementById("progress-vocab").textContent =
-      state.masteredVocab.size + "/" + LESSON_DATA.vocab.length;
+      state.masteredVocab.size + "/" + lesson.vocab.length;
+  }
+
+  // --- Lesson Switcher ---
+  function renderLessonSwitcher() {
+    const container = document.getElementById("lesson-switcher");
+    if (!container) return;
+    container.innerHTML = "";
+    ALL_LESSONS.forEach((lesson, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "lesson-pill" + (idx === state.activeLessonIndex ? " active" : "");
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-selected", String(idx === state.activeLessonIndex));
+      const prog =
+        idx === state.activeLessonIndex
+          ? state.completedClips.size
+          : readLessonProgress(lesson.id).completedClips.length;
+      const total = lesson.clips.length;
+      const progText = prog >= total ? "✓" : prog + "/" + total;
+      btn.innerHTML =
+        '<span class="lesson-pill-num">L0' + (idx + 1) + "</span>" +
+        '<span class="lesson-pill-title">' + escapeHtml(lesson.shortTitle || lesson.title) + "</span>" +
+        '<span class="lesson-pill-prog">' + progText + "</span>";
+      btn.addEventListener("click", () => selectLesson(idx));
+      container.appendChild(btn);
+    });
+  }
+
+  function selectLesson(index) {
+    if (index === state.activeLessonIndex || index < 0 || index >= ALL_LESSONS.length) return;
+    state.activeLessonIndex = index;
+    state.activeClipIndex = 0;
+    state.quizAnswers = {};
+
+    const lesson = getActiveLesson();
+    try {
+      localStorage.setItem(ACTIVE_LESSON_KEY, lesson.id);
+      const url = new URL(window.location.href);
+      url.searchParams.set("lesson", lesson.id);
+      window.history.replaceState(null, "", url.toString());
+    } catch (_) {
+      // Ignore history/storage errors
+    }
+
+    loadLessonProgress();
+    document.title = "EIKEN 1 Listening Lab — " + lesson.lessonNumber;
+    loadAudioForActiveLesson();
+    renderLessonSwitcher();
+    renderHero();
+    updateProgress();
+    renderActiveClip();
+    renderVocab();
+    renderQuiz();
   }
 
   // --- Render Lesson Info ---
   function renderHero() {
-    document.getElementById("lesson-number").textContent = LESSON_DATA.lessonNumber;
-    document.getElementById("lesson-level").textContent = LESSON_DATA.level;
-    document.getElementById("lesson-time").textContent = LESSON_DATA.estimatedMinutes + " min";
-    document.getElementById("lesson-title").textContent = LESSON_DATA.title;
+    const lesson = getActiveLesson();
+    document.getElementById("lesson-number").textContent = lesson.lessonNumber;
+    document.getElementById("lesson-level").textContent = lesson.level;
+    document.getElementById("lesson-time").textContent = lesson.estimatedMinutes + " min";
+    document.getElementById("lesson-title").textContent = lesson.title;
     document.getElementById("lesson-subtitle").textContent =
-      LESSON_DATA.originalTitle + " — " + LESSON_DATA.speaker;
-    document.getElementById("lesson-summary").textContent = LESSON_DATA.summary;
+      lesson.originalTitle + " — " + lesson.speaker;
+    document.getElementById("lesson-summary").textContent = lesson.summary;
 
     const creditHtml =
       "<span>" +
-      escapeHtml(LESSON_DATA.credit || "") +
+      escapeHtml(lesson.credit || "") +
       "</span>" +
       '<a href="' +
-      escapeHtml(LESSON_DATA.sourceUrl || "#") +
+      escapeHtml(lesson.sourceUrl || "#") +
       '" target="_blank" rel="noopener noreferrer">TED公式ページで動画を見る ↗</a>';
 
     const deskCredit = document.getElementById("source-credit");
@@ -176,7 +290,7 @@
   function renderClipList() {
     const strip = document.getElementById("clip-list");
     strip.innerHTML = "";
-    LESSON_DATA.clips.forEach((clip, idx) => {
+    getActiveLesson().clips.forEach((clip, idx) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.setAttribute("role", "option");
@@ -586,7 +700,7 @@
     const grid = document.getElementById("vocab-grid");
     grid.innerHTML = "";
 
-    LESSON_DATA.vocab.forEach((item) => {
+    getActiveLesson().vocab.forEach((item) => {
       const mastered = state.masteredVocab.has(item.word);
       const card = document.createElement("article");
       card.className = "vocab-card" + (mastered ? " mastered" : "");
@@ -634,9 +748,10 @@
   function renderQuiz() {
     const list = document.getElementById("quiz-list");
     list.innerHTML = "";
+    const lesson = getActiveLesson();
 
     let score = 0;
-    LESSON_DATA.quiz.forEach((q, qIdx) => {
+    lesson.quiz.forEach((q, qIdx) => {
       const chosen = state.quizAnswers[q.id];
       const answered = chosen !== undefined;
       if (answered && chosen === q.correctIndex) score += 1;
@@ -683,7 +798,7 @@
     });
 
     document.getElementById("quiz-score-text").textContent =
-      score + " / " + LESSON_DATA.quiz.length;
+      score + " / " + lesson.quiz.length;
   }
 
   // --- Tab Switching (Syncs Desktop Tabs + Mobile Bottom Nav) ---
@@ -745,13 +860,20 @@
     }
   }
 
+  function loadAudioForActiveLesson() {
+    const lesson = getActiveLesson();
+    if (!audio || !lesson.audioUrl) return;
+    if (!audio.paused) audio.pause();
+    pendingSeek = getActiveClip().start;
+    audio.src = lesson.audioUrl;
+    audio.playbackRate = getPlaybackRate();
+    audio.load();
+    syncPlayButtonUI();
+  }
+
   function initAudioPlayer() {
     audio = document.getElementById("audio-player");
-    if (!audio || !LESSON_DATA.audioUrl) return;
-
-    audio.src = LESSON_DATA.audioUrl;
-    audio.playbackRate = getPlaybackRate();
-    pendingSeek = getActiveClip().start;
+    if (!audio) return;
 
     audio.addEventListener("loadedmetadata", () => {
       applyPendingSeekIfReady();
@@ -770,6 +892,8 @@
 
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(handleTimeTick, 100);
+
+    loadAudioForActiveLesson();
   }
 
   function seekAndPlay(seconds) {
@@ -920,6 +1044,7 @@
       }
       saveState();
       updateProgress();
+      renderLessonSwitcher();
       renderActiveClip();
     });
 
@@ -963,7 +1088,9 @@
 
   // --- Boot ---
   loadState();
+  document.title = "EIKEN 1 Listening Lab — " + getActiveLesson().lessonNumber;
   applyTheme();
+  renderLessonSwitcher();
   renderHero();
   updateProgress();
   renderActiveClip();

@@ -10,14 +10,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="EIKEN 1 Lab" />
-  <link rel="manifest" href="manifest.json?v=7" />
-  <link rel="icon" href="icon.svg?v=7" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg?v=7" />
+  <link rel="manifest" href="manifest.json?v=8" />
+  <link rel="icon" href="icon.svg?v=8" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg?v=8" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <title>EIKEN 1 Listening Lab — Lesson 01</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <title>EIKEN 1 Listening Lab</title>
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <!-- Slim Top Bar -->
@@ -39,6 +39,11 @@
       </div>
     </div>
   </header>
+
+  <!-- Lesson Switcher Bar -->
+  <nav class="lesson-switcher-bar" aria-label="レッスン切り替え">
+    <div class="lesson-switcher-inner" id="lesson-switcher" role="tablist" aria-label="教材一覧"></div>
+  </nav>
 
   <div class="app-shell">
     <!-- Sticky Audio Dock -->
@@ -180,7 +185,7 @@
       <section id="panel-vocab" class="study-panel" role="tabpanel" hidden>
         <div class="clip-header-card">
           <span class="eyebrow">GRADE 1 VOCABULARY</span>
-          <h2 class="clip-h2">この動画の重要語彙 10選</h2>
+          <h2 class="clip-h2">このレッスンの重要語彙 10選</h2>
           <p class="eiken-focus">文脈とニュアンスをセットで定着させましょう。覚えたカードはタップでチェックできます。</p>
         </div>
         <div id="vocab-grid" class="vocab-grid"></div>
@@ -225,7 +230,7 @@
     </button>
   </nav>
 
-  <script src="lesson-data.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="lesson-data.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

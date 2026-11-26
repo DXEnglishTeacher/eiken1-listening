@@ -209,6 +209,81 @@ button, input {
   flex-shrink: 0;
 }
 
+/* Lesson Switcher Bar */
+.lesson-switcher-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.lesson-switcher-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lesson-switcher-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.lesson-pill {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lesson-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.lesson-pill-num {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-3);
+}
+
+.lesson-pill-prog {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.lesson-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.lesson-pill.active .lesson-pill-num,
+.lesson-pill.active .lesson-pill-prog {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
 /* Main Shell */
 .app-shell {
   max-width: 1280px;
@@ -1196,6 +1271,10 @@ button, input {
     gap: 6px;
   }
 
+  .lesson-switcher-inner {
+    padding: 7px 12px;
+  }
+
   .brand-name {
     font-size: 0.8rem;
   }
@@ -1326,6 +1405,7 @@ button, input {
     padding: 6px 10px;
   }
 
+  body.keyboard-compact .lesson-switcher-bar,
   body.keyboard-compact .audio-top-row,
   body.keyboard-compact .audio-seek-row,
   body.keyboard-compact .clip-strip-wrap,

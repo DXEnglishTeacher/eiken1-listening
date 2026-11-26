@@ -11,13 +11,14 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 
-def load_lesson_data(js_path: pathlib.Path) -> dict:
-    """Evaluate lesson-data.js via macOS JavaScriptCore (osascript) into JSON."""
+def load_lessons_data(js_path: pathlib.Path) -> list[dict]:
+    """Evaluate lesson-data.js via macOS JavaScriptCore (osascript) into a list of lessons."""
     script = (
         f'ObjC.import("Foundation");'
         f'var txt = $.NSString.stringWithContentsOfFileEncodingError("{js_path}", $.NSUTF8StringEncoding, null).js;'
-        f'eval(txt.replace("const LESSON_DATA", "var LESSON_DATA"));'
-        f'JSON.stringify(LESSON_DATA);'
+        f'txt = txt.replace(/const LESSONS\\b/g, "var LESSONS").replace(/const LESSON_DATA\\b/g, "var LESSON_DATA");'
+        f'eval(txt);'
+        f'JSON.stringify(typeof LESSONS !== "undefined" ? LESSONS : [LESSON_DATA]);'
     )
     out = subprocess.check_output(["osascript", "-l", "JavaScript", "-e", script], text=True)
     return json.loads(out.strip())
@@ -109,8 +110,8 @@ def is_stage_direction(text: str) -> bool:
     )
 
 
-def verify(lesson_path: pathlib.Path) -> int:
-    lesson = load_lesson_data(lesson_path)
+def verify_one_lesson(lesson: dict) -> tuple[list[str], str]:
+    lid = lesson.get("id", "?")
     video_id = lesson["youtubeId"]
     audio_url = lesson.get("audioUrl")
     offset = float(lesson.get("audioOffset", 0.0))
@@ -118,12 +119,12 @@ def verify(lesson_path: pathlib.Path) -> int:
     errors: list[str] = []
 
     if not audio_url:
-        errors.append("Missing 'audioUrl' in LESSON_DATA")
+        errors.append(f"[{lid}] Missing 'audioUrl'")
         audio_summary = "missing"
     else:
         ok, audio_summary = verify_audio_url(audio_url)
         if not ok:
-            errors.append(audio_summary)
+            errors.append(f"[{lid}] {audio_summary}")
 
     segs = fetch_youtube_captions(video_id)
     speech_segs = [(s, e, t) for s, e, t in segs if not is_stage_direction(t)]
@@ -132,7 +133,7 @@ def verify(lesson_path: pathlib.Path) -> int:
     total_lines = 0
 
     for clip in lesson["clips"]:
-        cid = clip["id"]
+        cid = f"{lid}/{clip['id']}"
         c_start = float(clip["start"])
         c_end = float(clip["end"])
         yt_c_start = c_start - offset
@@ -197,16 +198,45 @@ def verify(lesson_path: pathlib.Path) -> int:
                     f"[{cid}] dictation blank {blank!r} not found in clip transcript"
                 )
 
-    if errors:
+    vocab = lesson.get("vocab", [])
+    if len(vocab) != 10:
+        errors.append(f"[{lid}] expected 10 vocab items, found {len(vocab)}")
+
+    quiz = lesson.get("quiz", [])
+    if len(quiz) != 4:
+        errors.append(f"[{lid}] expected 4 quiz questions, found {len(quiz)}")
+    for q in quiz:
+        opts = q.get("options", [])
+        c_idx = q.get("correctIndex")
+        if not isinstance(c_idx, int) or not (0 <= c_idx < len(opts)):
+            errors.append(f"[{lid}/{q.get('id', '?')}] invalid correctIndex={c_idx!r}")
+
+    summary = (
+        f"PASS [{lid}]: Verified audio ({audio_summary}), {len(lesson['clips'])} clips, "
+        f"{total_lines} transcript lines, {len(vocab)} vocab, {len(quiz)} quiz "
+        f"(audioOffset={offset}s, first YT speech={first_speech_start:.1f}s)."
+    )
+    return errors, summary
+
+
+def verify(lesson_path: pathlib.Path) -> int:
+    lessons = load_lessons_data(lesson_path)
+    all_errors: list[str] = []
+    summaries: list[str] = []
+
+    for lesson in lessons:
+        errs, summary = verify_one_lesson(lesson)
+        all_errors.extend(errs)
+        summaries.append(summary)
+
+    if all_errors:
         print("FAIL:")
-        for err in errors:
+        for err in all_errors:
             print(" -", err)
         return 1
 
-    print(
-        f"PASS: Verified audio ({audio_summary}), {len(lesson['clips'])} clips, and {total_lines} transcript lines "
-        f"(audioOffset={offset}s, first YT speech={first_speech_start:.1f}s)."
-    )
+    for s in summaries:
+        print(s)
     return 0
 
 
