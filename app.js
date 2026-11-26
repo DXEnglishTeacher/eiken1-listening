@@ -195,11 +195,18 @@
       const total = lesson.clips.length;
       const progText = prog >= total ? "✓" : prog + "/" + total;
       btn.innerHTML =
-        '<span class="lesson-pill-num">L0' + (idx + 1) + "</span>" +
+        '<span class="lesson-pill-num">L' + String(idx + 1).padStart(2, "0") + "</span>" +
         '<span class="lesson-pill-title">' + escapeHtml(lesson.shortTitle || lesson.title) + "</span>" +
         '<span class="lesson-pill-prog">' + progText + "</span>";
       btn.addEventListener("click", () => selectLesson(idx));
       container.appendChild(btn);
+
+      if (idx === state.activeLessonIndex) {
+        requestAnimationFrame(() => {
+          const target = btn.offsetLeft - (container.clientWidth - btn.offsetWidth) / 2;
+          container.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+        });
+      }
     });
   }
 
